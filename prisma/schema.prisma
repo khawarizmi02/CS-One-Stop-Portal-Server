@@ -16,6 +16,51 @@ model User {
   firstName    String?
   lastName     String?
   imageUrl     String?
+  role         String   @default("USER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  AnnouncementsCreated Announcement[]
+  EventsCreated        Event[]
+  RSVPs                RSVP[]
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  imageUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  targetUsers Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  targetUsers Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+
+  RSVPs RSVP[]
+}
+
+model RSVP {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+
+  userId  String
+  eventId String
 }
