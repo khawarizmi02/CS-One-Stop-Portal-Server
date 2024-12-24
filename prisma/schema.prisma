@@ -23,6 +23,12 @@ model User {
   AnnouncementsCreated Announcement[]
   EventsCreated        Event[]
   RSVPs                RSVP[]
+  ForumsCreated        Forum[]
+  ForumCommentsCreated ForumComment[]
+  GroupsCreated        Group[]
+  GroupMessagesCreated GroupMessage[]
+  GroupTasksCreated    GroupTask[]
+  GroupMediaCreated    GroupMedia[]
 }
 
 model Announcement {
@@ -63,4 +69,91 @@ model RSVP {
 
   userId  String
   eventId String
+}
+
+model Forum {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  imageUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+
+  Comments ForumComment[]
+}
+
+model ForumComment {
+  id        String         @id @default(cuid())
+  content   String
+  imageUrl  String?
+  createdBy User           @relation(fields: [createdById], references: [id])
+  forum     Forum          @relation(fields: [forumId], references: [id])
+  parent    ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   ForumComment[] @relation("CommentReplies")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  createdById String
+  forumId     String
+  parentId    String?
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  members     Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+
+  Messages GroupMessage[]
+  Tasks    GroupTask[]
+  Media    GroupMedia[]
+}
+
+model GroupMessage {
+  id        String   @id @default(cuid())
+  content   String
+  imageUrl  String?
+  createdBy User     @relation(fields: [createdById], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+
+  createdById String
+  groupId     String
+}
+
+model GroupTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  imageUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  group       Group    @relation(fields: [groupId], references: [id])
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String
+  groupId     String
+}
+
+model GroupMedia {
+  id        String   @id @default(cuid())
+  mediaType String
+  mediaUrl  String
+  createdBy User     @relation(fields: [createdById], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+
+  createdById String
+  groupId     String
 }
