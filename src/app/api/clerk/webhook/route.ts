@@ -7,17 +7,20 @@ export const POST = async (req: Request) => {
   const { data } = await req.json();
   console.log("Received event", data);
 
-  const emailAddress = data.email_addresses[0].email_address;
+  const email = data.email_addresses[0].email_address;
   const firstName = data.first_name;
   const lastName = data.last_name;
   const userId = data.id;
+	const clerkId =  data.id;
+	const role = 'user'
 
   const user: Prisma.UserCreateInput = {
-    emailAddress,
-    firstName,
-    lastName,
-    id: userId,
-  };
+		email,
+		firstName,
+		lastName,
+		clerkId,
+		role
+	};
 
   try {
     await db.user.upsert({

@@ -1,13 +1,27 @@
-import Link from "next/link";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
-import { api, HydrateClient } from "@/trpc/server";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/styles/page-layout";
 
-export default async function Home() {
+import Home from "./Home";
+import Dashboard from "./Dashboard";
+
+function Page() {
   return (
-    <div>
-      <div>Hello Khawa</div>
-      <Button variant="outline">click</Button>
+    <div className={`${Layout.center}`}>
+			{/* <UserButton />
+      <Button variant="outline">click</Button> */}
+
+			{/* Landing (Home) Page Content */}
+			<SignedOut>
+				<Home />
+			</SignedOut>
+
+			{/* Dashboard Page Content */}
+			<SignedIn>
+				<Dashboard />
+			</SignedIn>
     </div>
   );
 }
+
+export default Page;

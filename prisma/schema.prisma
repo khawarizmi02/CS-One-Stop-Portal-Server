@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  emailAddress String   @unique
-  firstName    String?
-  lastName     String?
-  imageUrl     String?
-  role         String   @default("USER")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   AnnouncementsCreated Announcement[]
   EventsCreated        Event[]
