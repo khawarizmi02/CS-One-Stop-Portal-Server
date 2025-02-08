@@ -56,7 +56,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            <SidebarTrigger />
+            <SidebarTrigger className="pl-1" />
           </SidebarMenu>
           <SidebarMenu>
             {sidebarItems.map((item) => (

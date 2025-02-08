@@ -8,12 +8,26 @@ const isPublicRoute = createRouteMatcher([
   "/api/clerk/webhook(.*)",
 ]);
 
+const isPrivateRoute = createRouteMatcher([
+  "/forum(.*)",
+  "/email(.*)",
+  "/file(.*)",
+  "/group(.*)",
+  "/announcement(.*)",
+]);
+
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    return NextResponse.redirect(redirectUrl);
+  const url = req.nextUrl.clone();
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
   }
+
+  if (isPrivateRoute(req) && !(await auth()).userId) {
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {
