@@ -9,6 +9,9 @@ export const forumRouter = createTRPCRouter({
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        createdBy: true,
+      },
     });
 
     return forums;

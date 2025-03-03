@@ -75,7 +75,7 @@ model RSVP {
 model Forum {
   id          String   @id @default(cuid())
   title       String
-  description String	 @db.VarChar(255)
+  description String   @db.Text
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
