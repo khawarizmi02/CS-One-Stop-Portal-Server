@@ -14,6 +14,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import AuthButton from "@/components/AuthButton";
 
 import { DefaultImage } from "@/constant";
+import { Button } from "@/components/ui/button";
 
 export default function Forum() {
   const router = useRouter();
@@ -51,8 +52,9 @@ export default function Forum() {
           ))}
         {forumList?.map((forum) => (
           <Card
+            onClick={() => router.push(`/forum/${forum.id}`)}
             key={forum.id}
-            className="flex flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow"
+            className="flex cursor-pointer flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow hover:bg-gray-100"
           >
             <div className="flex flex-auto flex-col gap-2">
               <div className="flex h-[60px] flex-row items-center justify-start gap-2">
