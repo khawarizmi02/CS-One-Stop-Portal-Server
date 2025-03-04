@@ -79,11 +79,42 @@ export const forumRouter = createTRPCRouter({
               createdBy: true,
               replies: true,
             },
+            orderBy: {
+              createdAt: "desc",
+            },
           },
           createdBy: true,
         },
       });
 
-      return forum;
+      if (!forum) return null;
+
+      // Convert flat comments into a nested structure
+      const commentMap = new Map<string, any>();
+
+      // Initialize map with comments
+      forum.Comments.forEach((comment) => {
+        comment.replies = [];
+        commentMap.set(comment.id, comment);
+      });
+
+      // Build the nested structure
+      const nestedComments: any[] = [];
+
+      forum.Comments.forEach((comment) => {
+        if (comment.parentId) {
+          const parent = commentMap.get(comment.parentId);
+          if (parent) {
+            parent.replies.push(comment);
+          }
+        } else {
+          nestedComments.push(comment);
+        }
+      });
+
+      return {
+        ...forum,
+        Comments: nestedComments,
+      };
     }),
 });
