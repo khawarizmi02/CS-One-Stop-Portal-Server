@@ -63,6 +63,7 @@ const UpdateUser = async (data: any) => {
   const role = data.public_metadata.role;
 
   const user: Prisma.UserCreateInput = {
+    id: userId,
     email,
     firstName,
     lastName,
