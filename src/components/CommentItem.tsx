@@ -5,6 +5,8 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
+import { CirclePlus } from "lucide-react";
+
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
 interface ForumComment extends PrismaForumComment {
@@ -35,7 +37,13 @@ const CommentItem: React.FC<{ comment: ForumComment }> = ({ comment }) => {
         </p>
       </div>
       <div className="flex w-full flex-col gap-6 pl-[60px]">
-        <p>{comment.content}</p>
+        <div className="mb-2 flex flex-col gap-2">
+          <p>{comment.content}</p>
+          <div className="flex w-full items-center gap-2">
+            <CirclePlus />
+            <p>Reply</p>
+          </div>
+        </div>
         <div>
           {comment.replies.map((reply) => (
             <CommentItem key={reply.id} comment={reply} />

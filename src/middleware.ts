@@ -10,11 +10,21 @@ const isPublicRoute = createRouteMatcher([
 
 const isPrivateRoute = createRouteMatcher([
   "/forum(.*)",
+  // "/forum/[^/]+$",
   "/email(.*)",
   "/file(.*)",
   "/group(.*)",
   "/announcement(.*)",
 ]);
+
+// TODO: Add more private routes as needed
+// const privateAdminRoute = createRouteMatcher(["/admin(.*)"]);
+
+// const privateLecturerRoute = createRouteMatcher([
+//   "/lecturer(.*)",
+//   "/forum/[^/]+$",
+//   "/forum/create",
+// ]);
 
 export default clerkMiddleware(async (auth, req) => {
   const url = req.nextUrl.clone();

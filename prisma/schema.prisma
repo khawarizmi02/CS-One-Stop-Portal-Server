@@ -75,11 +75,11 @@ model RSVP {
 model Forum {
   id          String   @id @default(cuid())
   title       String
-  description String   @db.Text
+  description Json     @db.JsonB()
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 
   createdById String
 

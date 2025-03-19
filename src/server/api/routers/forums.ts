@@ -21,7 +21,8 @@ export const forumRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string().min(1),
-        description: z.string().min(1),
+        description: z.array(z.any()),
+        imageUrl: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -31,9 +32,23 @@ export const forumRouter = createTRPCRouter({
         throw new Error("Not authenticated");
       }
 
+      // Log the authorId to verify it
+      console.log("authorId: ", authorId);
+
+      // Check if the authorId exists in the User table
+      const userExists = await ctx.db.user.findUnique({
+        where: { id: authorId },
+      });
+
+      if (!userExists) {
+        throw new Error("User not found");
+      }
+
       const post = await ctx.db.forum.create({
         data: {
-          ...input,
+          title: input.title,
+          description: input.description,
+          imageUrl: input.imageUrl,
           createdById: authorId,
         },
       });

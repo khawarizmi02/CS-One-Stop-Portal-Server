@@ -27,10 +27,10 @@ import { auth } from "@clerk/nextjs/server";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const user = await auth();
+  const { userId, sessionId, getToken } = await auth();
   return {
     db,
-    auth: user,
+    auth: { userId, sessionId, getToken },
     ...opts,
   };
 };

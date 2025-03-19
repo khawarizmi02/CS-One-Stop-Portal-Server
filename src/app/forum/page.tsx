@@ -14,7 +14,6 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import AuthButton from "@/components/AuthButton";
 
 import { DefaultImage } from "@/constant";
-import { Button } from "@/components/ui/button";
 
 export default function Forum() {
   const router = useRouter();
@@ -71,7 +70,7 @@ export default function Forum() {
               </div>
               <div className="flex flex-col gap-1">
                 <p className="line-clamp-1 font-medium">{forum.title}</p>
-                <p className="line-clamp-5 font-light">{forum.description}</p>
+                {/* <p className="line-clamp-5 font-light">{forum.description}</p> */}
               </div>
             </div>
             <div className="relative flex-none items-end">
@@ -92,4 +91,9 @@ export default function Forum() {
       </div>
     </div>
   );
+}
+
+//TODO: Create function that can render the description
+function renderDescription(description: any) {
+  return <p className="line-clamp-5 font-light">{description}</p>;
 }

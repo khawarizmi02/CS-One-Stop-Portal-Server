@@ -24,6 +24,15 @@ const config = {
         NEXT_PUBLIC_AZURE_REDIRECT_URI: process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI,
         DATABASE_URL: process.env.DATABASE_URL,
     },
+	images: {
+	remotePatterns: [
+			{
+				protocol: 'https',
+				hostname: 'my-cs-one-stop-portal-bucket.s3.ap-southeast-1.amazonaws.com',
+				pathname: '**',
+			},
+		],
+	},
 };
 
 export default config;
