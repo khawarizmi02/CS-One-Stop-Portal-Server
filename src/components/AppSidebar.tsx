@@ -56,7 +56,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            <SidebarTrigger className="pl-1" />
+            <SidebarTrigger key="sidebar-trigger" className="pl-1" />
           </SidebarMenu>
           <SidebarMenu>
             {sidebarItems.map((item) => (
@@ -75,8 +75,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SignOutButton>
-              <SidebarMenuButton className="text-red-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
+            <SignOutButton key="sidebar-logout">
+              <SidebarMenuButton className="text-red-600 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
                 <LogOut className="mr-2 h-4 w-4" />
                 Log Out
               </SidebarMenuButton>

@@ -27,10 +27,12 @@ export default function RootLayout({
             <SignedIn>
               <SidebarProvider>
                 <AppSidebar />
-                {children}
+                <main>{children}</main>
               </SidebarProvider>
             </SignedIn>
-            <SignedOut>{children}</SignedOut>
+            <SignedOut>
+              <main>{children}</main>
+            </SignedOut>
           </TRPCReactProvider>
           <Toaster />
         </body>
