@@ -123,12 +123,6 @@ function ForumForm() {
       if (isError) {
         console.error("Error creating forum:", isError);
       }
-
-      // Here you would typically call your API to save the forum post
-      // const result = await yourCreateForumAPI(forumData);
-
-      // Redirect to the forum page or wherever you want
-      // router.push('/forums');
     } catch (error) {
       console.error("Error creating forum:", error);
     } finally {

@@ -18,64 +18,9 @@ import {
 // TypeScript users only add this code
 import { BaseEditor, Descendant } from "slate";
 import { ReactEditor } from "slate-react";
+import { JsonValue } from "@prisma/client/runtime/library";
 
 import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
-
-// Define all possible element types
-type ElementType =
-  | "paragraph"
-  | "heading-one"
-  | "heading-two"
-  | "block-quote"
-  | "numbered-list"
-  | "bulleted-list"
-  | "list-item";
-
-type CustomElement = {
-  type: ElementType;
-  children: CustomText[];
-};
-
-type CustomText = {
-  text: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  code?: boolean;
-};
-
-type Format = "bold" | "italic" | "underline" | "code";
-type BlockFormat =
-  | "paragraph"
-  | "heading-one"
-  | "heading-two"
-  | "block-quote"
-  | "numbered-list"
-  | "bulleted-list";
-
-declare module "slate" {
-  interface CustomTypes {
-    Editor: BaseEditor & ReactEditor;
-    Element: CustomElement;
-    Text: CustomText;
-  }
-}
-
-const initialValue: Descendant[] = [
-  {
-    type: "paragraph",
-    children: [{ text: "" }],
-  },
-];
-
-// Define proper TypeScript interfaces for props
-interface ElementProps extends RenderElementProps {
-  element: CustomElement;
-}
-
-interface LeafProps extends RenderLeafProps {
-  leaf: CustomText;
-}
 
 // Define how each element should be rendered
 const Element = ({ attributes, children, element }: ElementProps) => {
@@ -195,26 +140,94 @@ const withLists = (editor: BaseEditor & ReactEditor) => {
   return editor;
 };
 
-interface TextEditorProps {
-  value: Descendant[];
-  onChange: (value: Descendant[]) => void;
-}
+const ParseValue = (value: Descendant[] | JsonValue): Descendant[] => {
+  // Default empty editor content
+  const defaultValue: CustomElement[] = [
+    { type: "paragraph", children: [{ text: "" }] },
+  ];
 
-const TextEditor = ({ value, onChange }: TextEditorProps) => {
+  if (value === null || value === undefined) {
+    return defaultValue;
+  }
+
+  try {
+    // If it's a string, try to parse it as JSON
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Validate that each item has the expected structure
+          const isValid = parsed.every(
+            (item) =>
+              typeof item === "object" &&
+              item !== null &&
+              "type" in item &&
+              "children" in item &&
+              Array.isArray(item.children),
+          );
+
+          if (isValid) {
+            return parsed as Descendant[];
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing JSON string:", e);
+        return defaultValue;
+      }
+    }
+
+    // If it's already an array, validate its structure
+    if (Array.isArray(value) && value.length > 0) {
+      const isValid = value.every(
+        (item) =>
+          typeof item === "object" &&
+          item !== null &&
+          "type" in item &&
+          "children" in item &&
+          Array.isArray(item.children),
+      );
+
+      if (isValid) {
+        return value as Descendant[];
+      }
+    }
+
+    // Fallback to default
+    return defaultValue;
+  } catch (error) {
+    console.error("Error parsing value:", error);
+    return defaultValue;
+  }
+};
+
+const TextEditor = ({
+  value,
+  onChange,
+  readOnly = false,
+  className,
+  placeholder = "Enter some text…",
+}: TextEditorProps) => {
   // Apply the lists plugin
   const editor = useMemo(() => withLists(withReact(createEditor())), []);
 
-  const [editorValue, setEditorValue] = useState<Descendant[]>(initialValue);
+  // Always parse the value properly regardless of mode
+  const parsedValue = useMemo(() => ParseValue(value), [value]);
 
+  // Initialize with the parsed value
+  const [editorValue, setEditorValue] = useState<Descendant[]>(parsedValue);
+
+  // Update the editor value when the prop changes
   useEffect(() => {
-    setEditorValue(value.length ? value : initialValue);
+    const newParsedValue = ParseValue(value);
+    setEditorValue(newParsedValue);
   }, [value]);
 
   return (
     <div
+      className={className}
       style={{
-        border: "1px solid #667A8A",
-        padding: "10px",
+        border: readOnly ? "none" : "1px solid #667A8A",
+        padding: readOnly ? "10px 0" : "10px",
         borderRadius: "5px",
         width: "100%",
       }}
@@ -223,16 +236,19 @@ const TextEditor = ({ value, onChange }: TextEditorProps) => {
         editor={editor}
         initialValue={editorValue}
         onChange={(newValue) => {
-          setEditorValue(newValue);
-          onChange(newValue);
+          if (!readOnly) {
+            setEditorValue(newValue);
+            onChange(newValue);
+          }
         }}
       >
-        <FormatButtons />
+        {!readOnly && <FormatButtons />}
         <Editable
-          placeholder="Enter some text…"
+          readOnly={readOnly}
+          placeholder={readOnly ? "" : placeholder}
           style={{
-            minHeight: "150px",
-            padding: "10px",
+            minHeight: readOnly ? "auto" : "150px",
+            padding: readOnly ? "10px 0" : "10px",
             borderRadius: "5px",
           }}
           renderElement={(props) => <Element {...props} />}
@@ -273,7 +289,6 @@ const FormatButtons = () => {
     return !!match;
   };
 
-  // BUG: The toggleBlock function is not working as expected the list is not being toggled
   // Toggle block
   const toggleBlock = (format: BlockFormat): void => {
     const isActive = isBlockActive(format);
@@ -392,3 +407,67 @@ const FormatButtons = () => {
 };
 
 export default TextEditor;
+
+// Define all possible element types
+type ElementType =
+  | "paragraph"
+  | "heading-one"
+  | "heading-two"
+  | "block-quote"
+  | "numbered-list"
+  | "bulleted-list"
+  | "list-item";
+
+type CustomElement = {
+  type: ElementType;
+  children: CustomText[];
+};
+
+type CustomText = {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  code?: boolean;
+};
+
+type Format = "bold" | "italic" | "underline" | "code";
+type BlockFormat =
+  | "paragraph"
+  | "heading-one"
+  | "heading-two"
+  | "block-quote"
+  | "numbered-list"
+  | "bulleted-list";
+
+declare module "slate" {
+  interface CustomTypes {
+    Editor: BaseEditor & ReactEditor;
+    Element: CustomElement;
+    Text: CustomText;
+  }
+}
+
+export const initialValue: Descendant[] = [
+  {
+    type: "paragraph",
+    children: [{ text: "" }],
+  },
+];
+
+// Define proper TypeScript interfaces for props
+interface ElementProps extends RenderElementProps {
+  element: CustomElement;
+}
+
+interface LeafProps extends RenderLeafProps {
+  leaf: CustomText;
+}
+
+interface TextEditorProps {
+  value: Descendant[] | JsonValue;
+  onChange: (value: Descendant[]) => void;
+  readOnly?: boolean;
+  className?: string;
+  placeholder?: string;
+}

@@ -12,8 +12,10 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import AuthButton from "@/components/AuthButton";
+import TextEditor from "@/components/TextEditor";
 
 import { DefaultImage } from "@/constant";
+import { Descendant } from "slate";
 
 export default function Forum() {
   const router = useRouter();
@@ -70,7 +72,12 @@ export default function Forum() {
               </div>
               <div className="flex flex-col gap-1">
                 <p className="line-clamp-1 font-medium">{forum.title}</p>
-                {/* <p className="line-clamp-5 font-light">{forum.description}</p> */}
+                <TextEditor
+                  value={forum.description}
+                  onChange={() => {}}
+                  readOnly={true}
+                  className="line-clamp-2 font-light"
+                />
               </div>
             </div>
             <div className="relative flex-none items-end">
@@ -91,9 +98,4 @@ export default function Forum() {
       </div>
     </div>
   );
-}
-
-//TODO: Create function that can render the description
-function renderDescription(description: any) {
-  return <p className="line-clamp-5 font-light">{description}</p>;
 }

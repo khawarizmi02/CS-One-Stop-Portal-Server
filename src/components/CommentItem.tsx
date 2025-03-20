@@ -9,6 +9,8 @@ import { CirclePlus } from "lucide-react";
 
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 
+import TextEditor from "./TextEditor";
+
 interface ForumComment extends PrismaForumComment {
   createdBy: {
     id: string;
@@ -38,7 +40,12 @@ const CommentItem: React.FC<{ comment: ForumComment }> = ({ comment }) => {
       </div>
       <div className="flex w-full flex-col gap-6 pl-[60px]">
         <div className="mb-2 flex flex-col gap-2">
-          <p>{comment.content}</p>
+          {/* <p>{comment.content}</p> */}
+          <TextEditor
+            value={comment.content}
+            readOnly={true}
+            onChange={() => {}}
+          />
           <div className="flex w-full items-center gap-2">
             <CirclePlus />
             <p>Reply</p>

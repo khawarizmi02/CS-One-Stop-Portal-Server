@@ -6,6 +6,7 @@ import { type Metadata } from "next";
 import { TRPCReactProvider } from "@/trpc/react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
             </SignedIn>
             <SignedOut>{children}</SignedOut>
           </TRPCReactProvider>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

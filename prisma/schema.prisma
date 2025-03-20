@@ -35,10 +35,10 @@ model User {
 model Announcement {
   id          String   @id @default(cuid())
   title       String
-  content     String
+  content     Json		 @db.JsonB()
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
-  targetUsers Json     @default("[]")
+  targetUsers Json     @default("[]") @db.JsonB()
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -88,7 +88,7 @@ model Forum {
 
 model ForumComment {
   id        String         @id @default(cuid())
-  content   String
+  content   Json					 @db.JsonB()
   imageUrl  String?
   createdBy User           @relation(fields: [createdById], references: [id])
   forum     Forum          @relation(fields: [forumId], references: [id])
