@@ -39,7 +39,7 @@ export const env = createEnv({
     // Add AWS environment variables
     AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || "",
     AWS_BUCKET_REGION: process.env.AWS_BUCKET_REGION || "",
-    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY || "",
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
     // Client-side variables
     NEXT_PUBLIC_AWS_BUCKET_NAME: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME || "",
