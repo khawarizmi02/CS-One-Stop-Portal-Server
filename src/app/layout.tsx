@@ -25,10 +25,12 @@ export default function RootLayout({
         <body className="min-h-screen">
           <TRPCReactProvider>
             <SignedIn>
-              <SidebarProvider>
-                <AppSidebar />
-                <main>{children}</main>
-              </SidebarProvider>
+              <main>
+                <SidebarProvider>
+                  <AppSidebar />
+                  {children}
+                </SidebarProvider>
+              </main>
             </SignedIn>
             <SignedOut>
               <main>{children}</main>
