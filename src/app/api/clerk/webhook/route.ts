@@ -22,7 +22,7 @@ export const POST = async (req: Request) => {
 
 const CreateUser = async (data: any) => {
   const email = data.email_addresses[0].email_address;
-  const firstName = data.first_name;
+  const firstName = data.first_name ?? data.email_addresses[0].email_address;
   const lastName = data.last_name;
   const imageUrl = data.image_url;
   const userId = data.id;
@@ -30,6 +30,7 @@ const CreateUser = async (data: any) => {
   const role = "user";
 
   const user: Prisma.UserCreateInput = {
+    id: userId,
     email,
     firstName,
     lastName,
@@ -55,7 +56,7 @@ const CreateUser = async (data: any) => {
 
 const UpdateUser = async (data: any) => {
   const email = data.email_addresses[0].email_address;
-  const firstName = data.first_name;
+  const firstName = data.first_name ?? data.email_addresses[0].email_address;
   const lastName = data.last_name;
   const imageUrl = data.image_url;
   const userId = data.id;
@@ -73,12 +74,11 @@ const UpdateUser = async (data: any) => {
   };
 
   try {
-    await db.user.upsert({
+    await db.user.update({
       where: {
         id: userId,
       },
-      update: user,
-      create: user,
+      data: user,
     });
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {

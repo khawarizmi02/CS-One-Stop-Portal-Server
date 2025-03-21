@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id
   clerkId   String   @unique
   email     String   @unique
   firstName String?
@@ -108,7 +108,7 @@ model Group {
   description String
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
-  members     Json     @default("[]")
+  members     Json     @default("[]") @db.JsonB()
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
