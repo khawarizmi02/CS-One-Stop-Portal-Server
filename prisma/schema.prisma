@@ -27,6 +27,7 @@ model User {
   ForumsCreated        Forum[]
   ForumCommentsCreated ForumComment[]
   GroupsCreated        Group[]
+	GroupMembersCreated  GroupMember[]
   GroupMessagesCreated GroupMessage[]
   GroupTasksCreated    GroupTask[]
   GroupMediaCreated    GroupMedia[]
@@ -108,12 +109,13 @@ model Group {
   description String
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
-  members     Json     @default("[]") @db.JsonB()
+  members     Json     @db.JsonB()
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   createdById String
 
+	Members  GroupMember[]
   Messages GroupMessage[]
   Tasks    GroupTask[]
   Media    GroupMedia[]
@@ -134,7 +136,7 @@ model GroupMessage {
 model GroupTask {
   id          String   @id @default(cuid())
   title       String
-  description String
+  description String?
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
   group       Group    @relation(fields: [groupId], references: [id])
@@ -157,4 +159,15 @@ model GroupMedia {
 
   createdById String
   groupId     String
+}
+
+model GroupMember {
+	id        String @id @default(cuid())
+	user      User   @relation(fields: [userId], references: [id])
+	group     Group  @relation(fields: [groupId], references: [id])
+	role      String @default("MEMBER")
+	createdAt DateTime @default(now())
+
+	userId  String
+	groupId String
 }

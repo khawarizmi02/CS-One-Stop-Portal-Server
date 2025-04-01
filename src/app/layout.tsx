@@ -1,3 +1,4 @@
+import React from "react";
 import "@/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
@@ -5,7 +6,7 @@ import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -26,7 +27,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             <SignedIn>
               <main>
-                <SidebarProvider>
+                <SidebarProvider defaultOpen={false}>
                   <AppSidebar />
                   {children}
                 </SidebarProvider>

@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-
+import React, { useState, useEffect, forwardRef } from "react";
 import { Button, ButtonProps } from "./ui/button";
 
 type AuthButtonProps = {
@@ -9,24 +8,28 @@ type AuthButtonProps = {
   children: React.ReactNode;
 } & ButtonProps;
 
-const AuthButton: React.FC<AuthButtonProps> = ({
-  roles,
-  children,
-  ...props
-}) => {
-  const [role, setRole] = useState<string | null>(null);
+const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
+  ({ roles, children, ...props }, ref) => {
+    const [role, setRole] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchRole() {
-      const response = await fetch("/api/getRole");
-      const data = await response.json();
-      setRole(data.role ?? "user");
-    }
-    fetchRole();
-  }, []);
+    useEffect(() => {
+      async function fetchRole() {
+        const response = await fetch("/api/getRole");
+        const data = await response.json();
+        setRole(data.role ?? "user");
+      }
+      fetchRole();
+    }, []);
 
-  if (!role || !roles.includes(role)) return null;
-  return <Button {...props}>{children}</Button>;
-};
+    if (!role || !roles.includes(role)) return null;
+    return (
+      <Button ref={ref} {...props}>
+        {children}
+      </Button>
+    );
+  },
+);
+
+AuthButton.displayName = "AuthButton";
 
 export default AuthButton;

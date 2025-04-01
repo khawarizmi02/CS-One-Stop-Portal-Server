@@ -30,17 +30,10 @@ import { Button } from "@/components/ui/button";
 import TextEditor from "@/components/TextEditor";
 import AuthButton from "@/components/AuthButton";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { DefaultImage } from "@/constant";
-import { JSONValue } from "node_modules/superjson/dist/types";
 import { JsonValue } from "@prisma/client/runtime/library";
 
 const Announcement = () => {
@@ -130,6 +123,7 @@ const CreateAnnouncementForm = () => {
       toast({
         title: "Announcement has been created",
       });
+      form.reset();
     },
   });
 
