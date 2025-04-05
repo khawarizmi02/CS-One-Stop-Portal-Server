@@ -27,7 +27,7 @@ model User {
   ForumsCreated        Forum[]
   ForumCommentsCreated ForumComment[]
   GroupsCreated        Group[]
-	GroupMembersCreated  GroupMember[]
+  GroupMembersCreated  GroupMember[]
   GroupMessagesCreated GroupMessage[]
   GroupTasksCreated    GroupTask[]
   GroupMediaCreated    GroupMedia[]
@@ -36,7 +36,7 @@ model User {
 model Announcement {
   id          String   @id @default(cuid())
   title       String
-  content     Json		 @db.JsonB()
+  content     Json     @db.JsonB()
   imageUrl    String?
   createdBy   User     @relation(fields: [createdById], references: [id])
   targetUsers Json     @default("[]") @db.JsonB()
@@ -89,7 +89,7 @@ model Forum {
 
 model ForumComment {
   id        String         @id @default(cuid())
-  content   Json					 @db.JsonB()
+  content   Json           @db.JsonB()
   imageUrl  String?
   createdBy User           @relation(fields: [createdById], references: [id])
   forum     Forum          @relation(fields: [forumId], references: [id])
@@ -115,19 +115,20 @@ model Group {
 
   createdById String
 
-	Members  GroupMember[]
+  Members  GroupMember[]
   Messages GroupMessage[]
   Tasks    GroupTask[]
   Media    GroupMedia[]
 }
 
 model GroupMessage {
-  id        String   @id @default(cuid())
-  content   String
-  imageUrl  String?
-  createdBy User     @relation(fields: [createdById], references: [id])
-  group     Group    @relation(fields: [groupId], references: [id])
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  content     String?
+  messageType String   @default("text") // "text", "image", "file"
+  mediaUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  group       Group    @relation(fields: [groupId], references: [id])
+  createdAt   DateTime @default(now())
 
   createdById String
   groupId     String
@@ -162,12 +163,12 @@ model GroupMedia {
 }
 
 model GroupMember {
-	id        String @id @default(cuid())
-	user      User   @relation(fields: [userId], references: [id])
-	group     Group  @relation(fields: [groupId], references: [id])
-	role      String @default("MEMBER")
-	createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  role      String   @default("MEMBER")
+  createdAt DateTime @default(now())
 
-	userId  String
-	groupId String
+  userId  String
+  groupId String
 }

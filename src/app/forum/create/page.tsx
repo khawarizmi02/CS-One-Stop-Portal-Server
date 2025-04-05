@@ -77,9 +77,13 @@ function ForumForm() {
 
       if (values.image && values.image instanceof File) {
         const file = values.image;
-        const fileName = `${Date.now()}-${file.name}`; // Add timestamp to prevent name collisions
+        const fileName = `${file.name}`; // Add timestamp to prevent name collisions
 
-        const signedURLResult = await getSignedURL(fileName, file.type);
+        const signedURLResult = await getSignedURL(
+          fileName,
+          file.type,
+          "forum-images",
+        );
 
         if (signedURLResult.failure !== undefined) {
           console.error("Failed to get signed URL:", signedURLResult.failure);

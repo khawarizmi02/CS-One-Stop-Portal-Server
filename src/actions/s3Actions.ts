@@ -17,6 +17,7 @@ interface SignedURLResponse {
 export async function getSignedURL(
   fileName: string,
   contentType: string,
+  folderName?: string,
 ): Promise<SignedURLResponse> {
   if (!s3Client) {
     const clientInitResult = initializeS3Client();
@@ -26,7 +27,7 @@ export async function getSignedURL(
   }
 
   const sanitizedFileName = sanitizeFileName(fileName);
-  const key = generateUniqueKey(sanitizedFileName);
+  const key = generateUniqueKey({ fileName: sanitizedFileName, folderName });
   const putObjectCommand = createPutObjectCommand(key, contentType);
 
   try {
@@ -60,8 +61,16 @@ function sanitizeFileName(fileName: string): string {
   return fileName.replace(/[^\w\s.-]/g, "");
 }
 
-function generateUniqueKey(fileName: string): string {
-  return `forum-images/${Date.now()}-${fileName}`;
+interface generateUniqueKeyProps {
+  fileName: string;
+  folderName?: string;
+}
+
+function generateUniqueKey({
+  fileName,
+  folderName,
+}: generateUniqueKeyProps): string {
+  return `${folderName}/${Date.now()}-${fileName}`;
 }
 
 function createPutObjectCommand(

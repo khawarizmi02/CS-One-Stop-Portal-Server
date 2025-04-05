@@ -15,7 +15,7 @@ export default function GroupPageLayout({
   return (
     <main className="grid w-full grid-cols-[20%_77%] gap-4">
       <GroupSidebar />
-      <section>{children}</section>
+      <section className="max-h-screen">{children}</section>
     </main>
   );
 }

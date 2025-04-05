@@ -65,7 +65,7 @@ const Group = () => {
   const { mutate, isPending } = api.group.create.useMutation({
     onSuccess: () => {
       toast({ title: "Group successfully created!" });
-      router.refresh();
+      router.push("/group");
       refetchGroupList();
     },
     onError: () => {
@@ -77,7 +77,7 @@ const Group = () => {
   });
 
   return (
-    <div className="container mx-auto px-6 py-6">
+    <div className="container mx-auto h-full px-6 py-6">
       <div className="mb-8 flex items-start justify-between border-b border-gray-500 pb-4">
         <h2>Groups</h2>
 
@@ -302,9 +302,11 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create Group"}
-            </Button>
+            <DialogClose asChild>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Creating..." : "Create Group"}
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </form>
       </Form>
