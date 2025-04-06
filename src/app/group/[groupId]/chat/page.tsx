@@ -148,11 +148,11 @@ const ChatRoom = () => {
       } else {
         const prevMessage = messages[index - 1];
         const timeDiff = dayjs(message.createdAt).diff(
-          prevMessage.createdAt,
+          prevMessage?.createdAt,
           "minute",
         );
 
-        if (message.createdById === prevMessage.createdById && timeDiff < 5) {
+        if (message.createdById === prevMessage?.createdById && timeDiff < 5) {
           currentGroup.push(message);
         } else {
           result.push([...currentGroup]);
@@ -191,23 +191,23 @@ const ChatRoom = () => {
                 <div className="flex items-start gap-3 pt-1">
                   <Avatar className="h-10 w-10 rounded-full">
                     <AvatarImage
-                      src={firstMessage.createdBy.imageUrl ?? ""}
-                      alt={`${firstMessage.createdBy.firstName} ${firstMessage.createdBy.lastName ?? ""}`}
+                      src={firstMessage?.createdBy.imageUrl ?? ""}
+                      alt={`${firstMessage?.createdBy.firstName} ${firstMessage?.createdBy.lastName ?? ""}`}
                     />
                     <AvatarFallback className="bg-[#5865f2] text-white">
-                      {firstMessage.createdBy.firstName?.[0]}
-                      {firstMessage.createdBy.lastName?.[0]}
+                      {firstMessage?.createdBy.firstName?.[0]}
+                      {firstMessage?.createdBy.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2">
                       <span className="font-medium text-[#060607]">
-                        {firstMessage.createdBy.firstName}{" "}
-                        {firstMessage.createdBy.lastName ?? ""}
+                        {firstMessage?.createdBy.firstName}{" "}
+                        {firstMessage?.createdBy.lastName ?? ""}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {dayjs(firstMessage.createdAt).format("h:mm A")}
+                        {dayjs(firstMessage?.createdAt).format("h:mm A")}
                       </span>
                     </div>
 

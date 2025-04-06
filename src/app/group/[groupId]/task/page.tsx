@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { Router } from "next/router";
 
+// TODO: Improve the loading state and refetching logic on task update and creation
 const TaskPage = () => {
   const router = useRouter();
   return (
