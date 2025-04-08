@@ -5,6 +5,7 @@ import { groupRouter } from "./routers/group";
 import { taskRouter } from "./routers/task";
 import { messageRouter } from "./routers/message";
 import { userRouter } from "./routers/user";
+import { mailRouter } from "./routers/mail";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   task: taskRouter,
   message: messageRouter,
+  mail: mailRouter,
 });
 
 // export type definition of API

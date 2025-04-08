@@ -26,10 +26,12 @@ export default function RootLayout({
         <body className="min-h-screen">
           <TRPCReactProvider>
             <SignedIn>
-              <main>
+              <main className="flex h-screen">
                 <SidebarProvider defaultOpen={false}>
                   <AppSidebar />
-                  {children}
+                  <div className="h-screen flex-1 overflow-scroll">
+                    {children}
+                  </div>
                 </SidebarProvider>
               </main>
             </SignedIn>
