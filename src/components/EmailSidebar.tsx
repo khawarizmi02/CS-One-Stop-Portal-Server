@@ -14,7 +14,7 @@ const EmailSidebar = ({ isCollapsed }: Props) => {
   const [tab, setTab] = useLocalStorage("activeTab", "inbox");
   const [accountId] = useLocalStorage("accountId", "");
   const [activeTab, setActiveTab] = useState(tab);
-  const refetchInterval = 1000 * 5;
+  const refetchInterval = 1000 * 60 * 1;
   // Mock data for demonstration
   // const inboxCount = "5";
   // const draftsCount = "2";
@@ -25,7 +25,8 @@ const EmailSidebar = ({ isCollapsed }: Props) => {
       accountId,
       tab: "inbox",
     },
-    { enabled: !!accountId && !!tab, refetchInterval },
+    // { enabled: !!accountId && !!tab, refetchInterval },
+    { enabled: !!accountId && !!tab },
   );
 
   const { data: draftsCount } = api.mail.getNumThreads.useQuery(
@@ -33,7 +34,8 @@ const EmailSidebar = ({ isCollapsed }: Props) => {
       accountId,
       tab: "drafts",
     },
-    { enabled: !!accountId && !!tab, refetchInterval },
+    // { enabled: !!accountId && !!tab, refetchInterval },
+    { enabled: !!accountId && !!tab },
   );
 
   const { data: sentCount } = api.mail.getNumThreads.useQuery(
@@ -41,7 +43,8 @@ const EmailSidebar = ({ isCollapsed }: Props) => {
       accountId,
       tab: "sent",
     },
-    { enabled: !!accountId && !!tab, refetchInterval },
+    // { enabled: !!accountId && !!tab, refetchInterval },
+    { enabled: !!accountId && !!tab },
   );
 
   const handleTabChange = (tab: string) => {

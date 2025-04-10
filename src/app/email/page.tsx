@@ -63,12 +63,12 @@ export default function MailPage() {
       .split("; ")
       .find((row) => row.startsWith("react-resizable-panels:collapsed="));
 
-    if (layoutCookie) {
-      console.log(
-        "Layout from cookie:",
-        JSON.parse(layoutCookie?.split("=")[1] ?? "[]"),
-      );
-    }
+    // if (layoutCookie) {
+    //   console.log(
+    //     "Layout from cookie:",
+    //     JSON.parse(layoutCookie?.split("=")[1] ?? "[]"),
+    //   );
+    // }
     if (collapsedCookie) {
       const collapsedValue = JSON.parse(
         collapsedCookie.split("=")[1] ?? "false",
