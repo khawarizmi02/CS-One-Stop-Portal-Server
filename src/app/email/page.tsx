@@ -265,7 +265,6 @@ export default function MailPage() {
           <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
             {/* Placeholder for ThreadDisplay */}
             <ThreadDisplay />
-            <div>ThreadDisplay</div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </TooltipProvider>
