@@ -247,21 +247,24 @@ export default function MailPage() {
               <Separator />
               <SearchBar />
               <TabsContent value="inbox" className="m-0">
-                <ThreadList
+                {/* <ThreadList
                   key={`inbox-${isRefreshing ? "refreshing" : "idle"}`}
-                />
+                /> */}
+                threadList
               </TabsContent>
               <TabsContent value="done" className="m-0">
-                <ThreadList
+                {/* <ThreadList
                   key={`done-${isRefreshing ? "refreshing" : "idle"}`}
-                />
+                /> */}
+                threadList
               </TabsContent>
             </Tabs>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
             {/* Placeholder for ThreadDisplay */}
-            <ThreadDisplay />
+            {/* <ThreadDisplay /> */}
+            <div>ThreadDisplay</div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </TooltipProvider>
