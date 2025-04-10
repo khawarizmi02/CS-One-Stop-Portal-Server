@@ -22,6 +22,8 @@ export const env = createEnv({
 		AURINKO_CLIENT_ID: z.string().min(1),
 		AURINKO_CLIENT_SECRET: z.string().min(1),
 		AURINKO_SIGNING_SECRET: z.string().min(1),
+		//OpenAI variables
+		OPENAI_API_KEY: z.string().min(1),
   },
 
   /**
@@ -58,6 +60,8 @@ export const env = createEnv({
 		AURINKO_CLIENT_ID: process.env.AURINKO_CLIENT_ID || "",
 		AURINKO_CLIENT_SECRET: process.env.AURINKO_CLIENT_SECRET || "",
 		AURINKO_SIGNING_SECRET: process.env.AURINKO_SIGNING_SECRET || "",
+		// OpenAI variables
+		OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

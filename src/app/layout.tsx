@@ -29,9 +29,7 @@ export default function RootLayout({
               <main className="flex h-screen">
                 <SidebarProvider defaultOpen={false}>
                   <AppSidebar />
-                  <div className="h-screen flex-1 overflow-scroll">
-                    {children}
-                  </div>
+                  <div className="h-screen flex-1">{children}</div>
                 </SidebarProvider>
               </main>
             </SignedIn>

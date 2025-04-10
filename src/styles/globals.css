@@ -115,3 +115,12 @@ h3 {
   letter-spacing: -0.02em; /* -2% letter spacing */
 }
 
+.tiptap.ProseMirror {
+  outline: none;
+}
+
+.is-active {
+  background-color: #dadada;
+  border-radius: 4px;
+  padding: 0px 2px;
+}

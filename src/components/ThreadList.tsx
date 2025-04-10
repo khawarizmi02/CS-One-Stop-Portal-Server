@@ -23,7 +23,7 @@ export function ThreadList() {
   const [parent] = useAutoAnimate(/* optional config */);
   const [searchValue] = useAtom(searchValueAtom);
 
-  console.log("ThreadList", threads);
+  // console.log("ThreadList", threads);
 
   // Add safety check to handle undefined threads
   const safeThreads = threads || [];

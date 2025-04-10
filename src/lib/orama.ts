@@ -91,6 +91,7 @@ export class OramaManager {
   }
 }
 
+// TODO: Learn how to use Orama with Prisma
 // Usage example:
 async function main() {
   const oramaManager = new OramaManager("67358");
