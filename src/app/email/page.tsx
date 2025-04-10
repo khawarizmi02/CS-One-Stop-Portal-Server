@@ -34,27 +34,26 @@ export default function MailPage() {
   const { data: account, isLoading: isLoadingAccount } =
     api.mail.getAccount.useQuery();
 
-  // Add a sync emails mutation
-  // const syncEmailsMutation = api.mail.syncEmails.useMutation({
-  const { mutate: syncEmailsMutation } = api.mail.syncEmails.useMutation({
-    onSuccess: () => {
-      toast({
-        title: "Emails synced",
-        description: "Your emails have been refreshed.",
-      });
-      setIsRefreshing(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Sync failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsRefreshing(false);
-    },
-  });
+  const { mutate: syncEmailsMutation, isPending: isSyncing } =
+    api.mail.syncEmails.useMutation({
+      onSuccess: () => {
+        toast({
+          title: "Emails synced",
+          description: "Your emails have been refreshed",
+        });
+        setIsRefreshing(false);
+      },
+      onError: (error) => {
+        toast({
+          title: "Sync failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsRefreshing(false);
+      },
+    });
 
-  // Handle cookie reading client-side
+  // Cookie handling effect
   React.useEffect(() => {
     const layoutCookie = document.cookie
       .split("; ")
@@ -63,27 +62,34 @@ export default function MailPage() {
       .split("; ")
       .find((row) => row.startsWith("react-resizable-panels:collapsed="));
 
-    if (layoutCookie) {
-      console.log(
-        "Layout from cookie:",
-        JSON.parse(layoutCookie?.split("=")[1] ?? "[]"),
-      );
-    }
     if (collapsedCookie) {
-      const collapsedValue = JSON.parse(
-        collapsedCookie.split("=")[1] ?? "false",
-      );
-      setIsCollapsed(collapsedValue);
+      setIsCollapsed(JSON.parse(collapsedCookie.split("=")[1] ?? "false"));
     }
   }, []);
 
+  // Sync effect
   React.useEffect(() => {
-    if (account && account.id !== accountId && !isRefreshing) {
-      setAccountId(account.id);
+    if (
+      account?.id &&
+      account.id !== accountId &&
+      !isRefreshing &&
+      !isSyncing
+    ) {
       setIsRefreshing(true);
+      setAccountId(account.id);
       syncEmailsMutation({ accountId: account.id });
     }
-  }, [account, accountId, isRefreshing]);
+  }, [account?.id, accountId, isRefreshing, isSyncing, syncEmailsMutation]);
+
+  React.useEffect(() => {
+    if (!accountId) {
+      toast({
+        title: "No account found",
+        description: "Please add an account to continue.",
+        variant: "destructive",
+      });
+    }
+  }, [accountId]);
 
   if (!account) {
     return null;
@@ -98,11 +104,6 @@ export default function MailPage() {
   }
 
   if (!accountId) {
-    toast({
-      title: "No account found",
-      description: "Please add an account to continue.",
-      variant: "destructive",
-    });
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-muted-foreground">No account found</div>
@@ -247,23 +248,23 @@ export default function MailPage() {
               <Separator />
               <SearchBar />
               <TabsContent value="inbox" className="m-0">
-                {/* <ThreadList
+                <ThreadList
                   key={`inbox-${isRefreshing ? "refreshing" : "idle"}`}
-                /> */}
+                />
                 threadList
               </TabsContent>
               <TabsContent value="done" className="m-0">
-                {/* <ThreadList
+                <ThreadList
                   key={`done-${isRefreshing ? "refreshing" : "idle"}`}
-                /> */}
-                threadList
+                />
+                {/* threadList */}
               </TabsContent>
             </Tabs>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
             {/* Placeholder for ThreadDisplay */}
-            {/* <ThreadDisplay /> */}
+            <ThreadDisplay />
             <div>ThreadDisplay</div>
           </ResizablePanel>
         </ResizablePanelGroup>
