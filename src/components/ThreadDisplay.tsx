@@ -58,7 +58,7 @@ const ThreadDisplay = () => {
       accountId,
       threadId: threadId ?? "",
     },
-    { enabled: !!!_thread && !!threadId },
+    { enabled: !!accountId && !!threadId && !_thread },
   );
 
   const thread = _thread ?? foundThread;

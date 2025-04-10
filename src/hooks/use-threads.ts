@@ -25,7 +25,7 @@ const useThreads = () => {
     },
     {
       enabled: !!accountId && !!tab,
-      placeholderData: (e) => e,
+      // placeholderData: (e) => e,
       refetchInterval: 1000 * 60 * 1,
     },
   );

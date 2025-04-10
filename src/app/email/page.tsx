@@ -63,12 +63,12 @@ export default function MailPage() {
       .split("; ")
       .find((row) => row.startsWith("react-resizable-panels:collapsed="));
 
-    // if (layoutCookie) {
-    //   console.log(
-    //     "Layout from cookie:",
-    //     JSON.parse(layoutCookie?.split("=")[1] ?? "[]"),
-    //   );
-    // }
+    if (layoutCookie) {
+      console.log(
+        "Layout from cookie:",
+        JSON.parse(layoutCookie?.split("=")[1] ?? "[]"),
+      );
+    }
     if (collapsedCookie) {
       const collapsedValue = JSON.parse(
         collapsedCookie.split("=")[1] ?? "false",
@@ -78,16 +78,12 @@ export default function MailPage() {
   }, []);
 
   React.useEffect(() => {
-    if (account) {
+    if (account && account.id !== accountId && !isRefreshing) {
       setAccountId(account.id);
-
-      // Trigger email sync when the page loads and we have an account
-      if (!isRefreshing) {
-        setIsRefreshing(true);
-        syncEmailsMutation({ accountId: account.id });
-      }
+      setIsRefreshing(true);
+      syncEmailsMutation({ accountId: account.id });
     }
-  }, [account, setAccountId, syncEmailsMutation]);
+  }, [account, accountId, isRefreshing]);
 
   if (!account) {
     return null;
