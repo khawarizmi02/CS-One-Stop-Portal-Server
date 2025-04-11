@@ -15,6 +15,22 @@ export const getAurinkoAuthUrl = async (
   let recycle = "false";
   let accountId = "";
 
+  // Get user email
+  const user = await db.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  const authEmail = user?.email;
+
+  if (!authEmail) {
+    throw new Error("User email not found");
+  }
+
   // Check user has an account
   const account = await db.account.findUnique({
     where: {
@@ -57,6 +73,7 @@ export const getAurinkoAuthUrl = async (
     accountId,
     ensureScopes: "true",
     ensureAccess: "true",
+    authEmail,
     returnUrl: `${env.NEXT_PUBLIC_URL}/api/aurinko/callback`,
   });
 

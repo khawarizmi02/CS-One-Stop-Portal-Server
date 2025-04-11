@@ -2,6 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
+import { updateUserRoleMetadata } from "@/lib/clerk";
 
 export const POST = async (req: Request) => {
   const { data, type } = await req.json();
@@ -47,6 +48,10 @@ const CreateUser = async (data: any) => {
       update: user,
       create: user,
     });
+
+    // Update user role metadata in Clerk
+    await updateUserRoleMetadata(userId, role);
+
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {
     console.error("Error upserting user", error);
@@ -80,6 +85,9 @@ const UpdateUser = async (data: any) => {
       },
       data: user,
     });
+
+    await updateUserRoleMetadata(userId, role);
+
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {
     console.error("Error upserting user", error);

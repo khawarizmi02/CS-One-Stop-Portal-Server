@@ -92,7 +92,22 @@ export default function MailPage() {
   }, [accountId]);
 
   if (!account) {
-    return null;
+    return (
+      <div className="flex h-full flex-col items-center justify-center">
+        <div className="mb-3 text-muted-foreground">
+          Account is not linked yet
+        </div>
+        <Button
+          onClick={async () => {
+            const authUrl = await getAurinkoAuthUrl("Google");
+            window.location.href = authUrl;
+          }}
+          variant="default"
+        >
+          Link Account
+        </Button>
+      </div>
+    );
   }
 
   if (isLoadingAccount) {
@@ -106,7 +121,9 @@ export default function MailPage() {
   if (!accountId) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">No account found</div>
+        <div className="mb-3 text-muted-foreground">
+          Account is not linked yet
+        </div>
         <Button
           onClick={async () => {
             const authUrl = await getAurinkoAuthUrl("Google");
@@ -251,7 +268,6 @@ export default function MailPage() {
                 <ThreadList
                   key={`inbox-${isRefreshing ? "refreshing" : "idle"}`}
                 />
-                threadList
               </TabsContent>
               <TabsContent value="done" className="m-0">
                 <ThreadList

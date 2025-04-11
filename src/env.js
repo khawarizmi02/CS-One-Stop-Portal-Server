@@ -12,6 +12,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+		// Clerk variables
+		CLERK_SECRET_KEY: z.string().min(1),
     // Add AWS environment variables
     AWS_BUCKET_NAME: z.string().min(1),
     AWS_BUCKET_REGION: z.string().min(1),
@@ -46,6 +48,8 @@ export const env = createEnv({
 		SERVER_URL: process.env.SERVER_URL || "",
     DATABASE_URL: process.env.DATABASE_URL || "",
     NODE_ENV: process.env.NODE_ENV || "development",
+		// Clerk variables
+		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY || "",
     // Add AWS environment variables
     AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || "",
     AWS_BUCKET_REGION: process.env.AWS_BUCKET_REGION || "",

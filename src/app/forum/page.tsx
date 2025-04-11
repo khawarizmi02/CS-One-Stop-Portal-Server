@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import AuthButton from "@/components/AuthButton";
 import TextEditor from "@/components/TextEditor";
+import Dashboard from "../../components/Dashboard";
 
 import { DefaultImage } from "@/constant";
 import { Descendant } from "slate";

@@ -28,7 +28,7 @@ export default function RootLayout({
             <SignedIn>
               <main className="flex h-screen">
                 <SidebarProvider defaultOpen={false}>
-                  <AppSidebar />
+                  <AppSidebar isCollapsed={false} />
                   <div className="h-screen flex-1">{children}</div>
                 </SidebarProvider>
               </main>
