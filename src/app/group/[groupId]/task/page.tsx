@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useParams } from "next/navigation";
-import { ClipboardList, Plus } from "lucide-react";
+import { Plus, Hash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/react";
@@ -50,13 +50,13 @@ import { Router } from "next/router";
 const TaskPage = () => {
   const router = useRouter();
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-4 flex items-start justify-start gap-2 border-b border-gray-500 pb-4">
-        <ClipboardList className="" />
-        <h3>Task</h3>
+    <div className="container mx-auto h-full py-6">
+      <div className="flex h-12 items-center border-b border-[#e3e5e8] bg-white px-4 shadow-sm">
+        <Hash className="mr-2 h-5 w-5 text-gray-500" />
+        <h3 className="font-semibold">tasks-list</h3>
       </div>
 
-      <div className="mb-4 flex items-start justify-start gap-2 border-b border-gray-500 pb-4">
+      <div className="my-4 flex items-start justify-start gap-2 border-b border-[#e3e5e8] bg-white pb-4 shadow-sm">
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline">
@@ -123,7 +123,7 @@ const TaskList = () => {
 
   if (!taskList || taskList.length === 0) {
     return (
-      <section className="my-auto flex h-full w-full flex-col items-center justify-center text-slate-500">
+      <section className="my-auto flex h-auto w-full flex-col items-center justify-center text-slate-500">
         <p>No task found</p>
       </section>
     );

@@ -27,7 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Router, X } from "lucide-react";
+import { MessageCircle, Router, Search, Users, X } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import Loading from "@/components/Loading";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { UseMutateFunction } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Group = () => {
   const router = useRouter();
@@ -115,28 +123,117 @@ const GroupList = ({ groups, isLoading }: GroupListProps) => {
 
   if (!groups || groups.length === 0) {
     return (
-      <section className="flex h-full w-full flex-col items-center justify-center text-slate-500">
-        <p>No groups found</p>
+      <section className="flex h-full w-full flex-col items-center justify-center gap-4 py-12 text-slate-500">
+        <div className="rounded-full bg-slate-100 p-6">
+          <Users className="h-10 w-10 text-slate-400" />
+        </div>
+        <p className="text-lg font-medium">No groups found</p>
+        <p>Create a new group to get started</p>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto grid grid-cols-2 gap-2">
-      {groups.map((group) => (
-        <Card
-          key={group.id}
-          onClick={() => router.push(`/group/${group.id}/chat`)}
-          className="flex cursor-pointer flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow hover:bg-gray-100"
-        >
-          <CardTitle>{group.name}</CardTitle>
-          <CardDescription>
-            No. of members:{" "}
-            {Array.isArray(group.members) ? group.members.length : 0}
-          </CardDescription>
-        </Card>
-      ))}
-    </section>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search groups..."
+              className="pl-10"
+              type="search"
+            />
+          </div>
+          <Select defaultValue="newest">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="name">Group name</SelectItem>
+              <SelectItem value="members">Member count</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-sm text-slate-500">{groups.length} groups</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {groups.map((group) => (
+          <Card
+            key={group.id}
+            onClick={() => router.push(`/group/${group.id}/chat`)}
+            className="overflow-hidden transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-primary/20"
+          >
+            <div className="flex h-24 items-center justify-center bg-gradient-to-r from-primary/10 to-secondary/10">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-primary shadow">
+                {group.name.substring(0, 2).toUpperCase()}
+              </div>
+            </div>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{group.name}</CardTitle>
+                <Badge variant="outline" className="ml-2 whitespace-nowrap">
+                  {Array.isArray(group.members) ? group.members.length : 0}{" "}
+                  members
+                </Badge>
+              </div>
+
+              {group.description && (
+                <CardDescription className="mt-2 line-clamp-2">
+                  {group.description}
+                </CardDescription>
+              )}
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                  {Array.isArray(group.members) &&
+                    group.members.slice(0, 3).map((member, i) => (
+                      <Avatar key={i} className="h-8 w-8 ring-2 ring-white">
+                        <AvatarImage
+                          src={
+                            typeof member === "object" &&
+                            member &&
+                            "imageUrl" in member
+                              ? String(member.imageUrl || "")
+                              : undefined
+                          }
+                          alt={
+                            typeof member === "object" &&
+                            member &&
+                            "firstName" in member
+                              ? String(member.firstName || "Member")
+                              : "Member"
+                          }
+                        />
+                        <AvatarFallback>
+                          {typeof member === "object" &&
+                          member &&
+                          "firstName" in member &&
+                          typeof member.firstName === "string"
+                            ? member.firstName.substring(0, 1)
+                            : "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                  {Array.isArray(group.members) && group.members.length > 3 && (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-medium text-slate-600 ring-2 ring-white">
+                      +{group.members.length - 3}
+                    </div>
+                  )}
+                </div>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Chat</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

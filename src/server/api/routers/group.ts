@@ -37,7 +37,35 @@ export const groupRouter = createTRPCRouter({
 
     const groups = groupMembers.map((member) => member.group);
 
-    return groups;
+    const groupsWithMembersInfo = await Promise.all(
+      groups.map(async (group) => {
+        const members = await ctx.db.groupMember.findMany({
+          where: { groupId: group.id },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                imageUrl: true,
+              },
+            },
+          },
+        });
+
+        // Transform members to JSON-compatible format
+        const transformedMembers = members.map((member) => ({
+          id: member.userId,
+          firstName: member.user.firstName,
+          imageUrl: member.user.imageUrl,
+        }));
+
+        return {
+          ...group,
+          members: transformedMembers, // Ensure members are JSON-compatible
+        };
+      }),
+    );
+
+    return groupsWithMembersInfo;
   }),
 
   create: protectedProcedure

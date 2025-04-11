@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import {
-  MessageCircle,
+  MessageCircleMore,
   ClipboardList,
   Folder,
   CircleChevronLeft,
-  MessageCircleMore,
+  UsersRound,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,9 @@ interface GroupSidebarProps {
 export function GroupSidebar({ className }: GroupSidebarProps) {
   const router = useRouter();
   const { groupId } = useParams();
+  const pathname = usePathname();
+
+  const groupPage = pathname.split("/")[3]; // Extract the current page (e.g., "chat", "task", etc.)
 
   if (!groupId || !groupId[0]) return null;
 
@@ -30,17 +33,22 @@ export function GroupSidebar({ className }: GroupSidebarProps) {
     {
       name: "Chat",
       icon: <MessageCircleMore className="mr-2 h-4 w-4" />,
-      href: "/chat",
+      href: "chat",
     },
     {
       name: "Task",
       icon: <ClipboardList className="mr-2 h-4 w-4" />,
-      href: "/task",
+      href: "task",
     },
     {
       name: "Media",
       icon: <Folder className="mr-2 h-4 w-4" />,
-      href: "/media",
+      href: "media",
+    },
+    {
+      name: "Members",
+      icon: <UsersRound className="mr-2 h-4 w-4" />,
+      href: "members",
     },
   ];
 
@@ -64,9 +72,14 @@ export function GroupSidebar({ className }: GroupSidebarProps) {
       <div className="flex w-full flex-col justify-start gap-2">
         {sidebarItems.map((item, index) => (
           <Link
-            href={`/group/${groupId}${item.href}`}
+            href={`/group/${groupId}/${item.href}`}
             key={`${index}-${item.name}`}
-            className="flex flex-row items-start gap-2 rounded-md p-2 hover:bg-gray-100"
+            className={cn(
+              "flex cursor-pointer flex-row items-start gap-2 rounded-md p-2",
+              groupPage === item.href
+                ? "bg-gray-200 text-black" // Highlight active item
+                : "hover:bg-gray-100",
+            )}
           >
             {item.icon} {item.name}
           </Link>

@@ -171,7 +171,7 @@ const ChatRoom = () => {
   const messageGroups = getGroupedMessages();
 
   return (
-    <div className="flex h-screen w-full flex-col bg-[#f2f3f5] text-gray-800">
+    <div className="flex h-screen w-full flex-col pt-6 text-gray-800">
       {/* Server header */}
       <div className="flex h-12 items-center border-b border-[#e3e5e8] bg-white px-4 shadow-sm">
         <Hash className="mr-2 h-5 w-5 text-gray-500" />
@@ -179,7 +179,7 @@ const ChatRoom = () => {
       </div>
 
       {/* Messages area */}
-      <ScrollArea className="flex-1 overflow-y-auto px-4">
+      <ScrollArea className="flex-1 overflow-y-auto bg-[#f2f3f5] px-4">
         <div className="py-4">
           {messageGroups.map((group, groupIndex) => {
             const firstMessage = group[0];
