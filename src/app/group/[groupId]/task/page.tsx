@@ -49,6 +49,8 @@ import { Router } from "next/router";
 // TODO: Improve the loading state and refetching logic on task update and creation
 const TaskPage = () => {
   const router = useRouter();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
   return (
     <div className="container mx-auto h-full py-6">
       <div className="flex h-12 items-center border-b border-[#e3e5e8] bg-white px-4 shadow-sm">
@@ -57,13 +59,13 @@ const TaskPage = () => {
       </div>
 
       <div className="my-4 flex items-start justify-start gap-2 border-b border-[#e3e5e8] bg-white pb-4 shadow-sm">
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
               <Plus className="mr-1" /> Add task
             </Button>
           </DialogTrigger>
-          <CreateTask />
+          <CreateTask onSuccess={() => setDialogOpen(false)} />
         </Dialog>
       </div>
       <TaskList />
@@ -264,16 +266,25 @@ const TaskList = () => {
   );
 };
 
-const CreateTask = () => {
+interface CreateTaskProps {
+  onSuccess: () => void;
+}
+
+const CreateTask = ({ onSuccess }: CreateTaskProps) => {
   const { groupId } = useParams();
-  // const router = useRouter();
   const { toast } = useToast();
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
+    undefined,
+  );
+
   const { mutate } = api.task.create.useMutation({
     onSuccess: () => {
       toast({
         title: "Task created successfully",
       });
       form.reset();
+      setSelectedDate(undefined);
+      onSuccess(); // Call the onSuccess prop to close the dialog
     },
     onError: () => {
       toast({
@@ -303,6 +314,15 @@ const CreateTask = () => {
       groupId: Array.isArray(groupId) ? groupId[0] : groupId,
     },
   });
+
+  // Update form value when date changes
+  React.useEffect(() => {
+    if (selectedDate) {
+      form.setValue("dueDate", selectedDate.toISOString(), {
+        shouldValidate: true,
+      });
+    }
+  }, [selectedDate, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log(values);
@@ -350,17 +370,11 @@ const CreateTask = () => {
             name="dueDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="pr-2">Due Date</FormLabel>
+                <FormLabel>Due Date</FormLabel>
                 <FormControl>
                   <DatePickerWithPresets
-                    date={field.value ? new Date(field.value) : undefined}
-                    setDate={(date) => {
-                      if (date) {
-                        field.onChange(date.toISOString());
-                      } else {
-                        field.onChange("");
-                      }
-                    }}
+                    date={selectedDate}
+                    setDate={setSelectedDate}
                   />
                 </FormControl>
                 <FormMessage />
@@ -368,11 +382,11 @@ const CreateTask = () => {
             )}
           />
           <DialogFooter>
+            <Button type="submit">Create Task</Button>
             <DialogClose asChild>
-              <Button type="submit">Create Task</Button>
-            </DialogClose>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
           </DialogFooter>
         </form>

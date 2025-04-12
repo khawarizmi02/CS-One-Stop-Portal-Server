@@ -1,3 +1,6 @@
+"use client";
+
+import React from "react";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -40,9 +43,9 @@ const DatePickerWithPresets: React.FC<DatePickerWithPresetsProps> = ({
         className="flex w-auto flex-col space-y-2 p-2"
       >
         <Select
-          onValueChange={(value) =>
-            setDate(addDays(new Date(), parseInt(value)))
-          }
+          onValueChange={(value) => {
+            setDate(addDays(new Date(), parseInt(value)));
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select" />
@@ -58,7 +61,7 @@ const DatePickerWithPresets: React.FC<DatePickerWithPresetsProps> = ({
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(newDate) => setDate(newDate)}
+            onSelect={setDate}
             initialFocus
           />
         </div>
