@@ -45,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { Router } from "next/router";
+import InlineDatePicker from "@/components/DatePickerWithPreset";
 
 // TODO: Improve the loading state and refetching logic on task update and creation
 const TaskPage = () => {
@@ -330,7 +331,7 @@ const CreateTask = ({ onSuccess }: CreateTaskProps) => {
   };
 
   return (
-    <DialogContent>
+    <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>Create Task</DialogTitle>
         <DialogDescription>
@@ -368,11 +369,12 @@ const CreateTask = ({ onSuccess }: CreateTaskProps) => {
           <FormField
             control={form.control}
             name="dueDate"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>Due Date</FormLabel>
                 <FormControl>
-                  <DatePickerWithPresets
+                  {/* Replace DatePickerWithPresets with our new InlineDatePicker */}
+                  <InlineDatePicker
                     date={selectedDate}
                     setDate={setSelectedDate}
                   />
@@ -381,7 +383,7 @@ const CreateTask = ({ onSuccess }: CreateTaskProps) => {
               </FormItem>
             )}
           />
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="submit">Create Task</Button>
             <DialogClose asChild>
               <Button type="button" variant="outline">

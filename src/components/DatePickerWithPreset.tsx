@@ -1,73 +1,74 @@
+// InlineDatePicker.tsx - Create this as a new component
 "use client";
 
 import React from "react";
-import { CalendarIcon } from "lucide-react";
-import { Button } from "./ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 import { Calendar } from "./ui/calendar";
+import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { addDays, format } from "date-fns";
+import { format, addDays } from "date-fns";
 
-interface DatePickerWithPresetsProps {
+interface InlineDatePickerProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
 }
 
-const DatePickerWithPresets: React.FC<DatePickerWithPresetsProps> = ({
+const InlineDatePicker: React.FC<InlineDatePickerProps> = ({
   date,
   setDate,
 }) => {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
         <Button
-          variant={"outline"}
-          className={cn(
-            "w-[240px] justify-start text-left font-normal",
-            !date && "text-muted-foreground",
-          )}
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setDate(new Date())}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          Today
         </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="flex w-auto flex-col space-y-2 p-2"
-      >
-        <Select
-          onValueChange={(value) => {
-            setDate(addDays(new Date(), parseInt(value)));
-          }}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setDate(addDays(new Date(), 1))}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select" />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value="0">Today</SelectItem>
-            <SelectItem value="1">Tomorrow</SelectItem>
-            <SelectItem value="3">In 3 days</SelectItem>
-            <SelectItem value="7">In a week</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="rounded-md border">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            initialFocus
-          />
+          Tomorrow
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setDate(addDays(new Date(), 3))}
+        >
+          In 3 days
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setDate(addDays(new Date(), 7))}
+        >
+          In a week
+        </Button>
+      </div>
+
+      <div className="rounded-md border">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          initialFocus
+        />
+      </div>
+
+      {date && (
+        <div className="text-sm">
+          Selected: <span className="font-medium">{format(date, "PPP")}</span>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   );
 };
 
-export default DatePickerWithPresets;
+export default InlineDatePicker;
