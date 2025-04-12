@@ -69,6 +69,8 @@ export function AppSidebar({
 
   // if (userRole === "admin") return null;
 
+  if (pageName === "privacy" || pageName === "term-of-service") return null;
+
   return (
     <Sidebar
       collapsible="icon"

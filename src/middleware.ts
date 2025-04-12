@@ -9,7 +9,6 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 const isPrivateRoute = createRouteMatcher([
-  "/(.*)",
   "/forum(.*)",
   // "/forum/[^/]+$",
   "/email(.*)",

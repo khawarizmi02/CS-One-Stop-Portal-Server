@@ -87,6 +87,11 @@ export const groupRouter = createTRPCRouter({
 
       if (!userExists) throw new Error("User not found");
 
+      // make sure the creator is in the members list
+      if (!input.members.includes(createdById)) {
+        input.members.push(createdById);
+      }
+
       const group = await ctx.db.group.create({
         data: {
           name: input.name,
@@ -96,10 +101,18 @@ export const groupRouter = createTRPCRouter({
         },
       });
 
+      let role = "MEMBER";
+      // make the creator an admin
+
+      if (input.members.includes(createdById)) {
+        role = "ADMIN";
+      }
+
       const groupMembers = await ctx.db.groupMember.createMany({
         data: input.members.map((memberId) => ({
           groupId: group.id,
           userId: memberId,
+          role: role,
         })),
       });
 
@@ -183,5 +196,222 @@ export const groupRouter = createTRPCRouter({
       }
 
       return message;
+    }),
+
+  // Add these new procedures to your group router in src/server/api/routers/group.ts
+
+  // Inside your existing groupRouter:
+
+  getGroupMembers: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      const members = await ctx.db.groupMember.findMany({
+        where: {
+          groupId: input.groupId,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              imageUrl: true,
+            },
+          },
+        },
+      });
+
+      return members.map((member) => ({
+        id: member.user.id,
+        firstName: member.user.firstName,
+        lastName: member.user.lastName,
+        imageUrl: member.user.imageUrl,
+        role: member.role,
+      }));
+    }),
+
+  addMembers: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+        memberIds: z.array(z.string().nonempty()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // Check if user has permission to add members (optional)
+      const userMembership = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: userId,
+          // role: "ADMIN", // You may want to check if user is admin
+        },
+      });
+
+      const isCreator = await ctx.db.group.findFirst({
+        where: {
+          id: input.groupId,
+          createdById: userId,
+        },
+      });
+
+      if (!userMembership && !isCreator) {
+        throw new Error(
+          "You don't have permission to add members to this group",
+        );
+      }
+
+      // Add members to the group
+      const newMembers = await ctx.db.groupMember.createMany({
+        data: input.memberIds.map((memberId) => ({
+          groupId: input.groupId,
+          userId: memberId,
+          role: "MEMBER", // Default role for new members
+        })),
+        skipDuplicates: true, // Skip if the member is already in the group
+      });
+
+      return newMembers;
+    }),
+
+  removeMembers: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+        memberIds: z.array(z.string().nonempty()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // Check if user has permission to remove members
+      const userMembership = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: userId,
+          // role: "ADMIN", // You may want to check if user is admin
+        },
+      });
+
+      const isCreator = await ctx.db.group.findFirst({
+        where: {
+          id: input.groupId,
+          createdById: userId,
+        },
+      });
+
+      if (!userMembership && !isCreator) {
+        throw new Error(
+          "You don't have permission to remove members from this group",
+        );
+      }
+
+      // Remove members from the group
+      const removedMembers = await ctx.db.groupMember.deleteMany({
+        where: {
+          groupId: input.groupId,
+          userId: {
+            in: input.memberIds,
+          },
+        },
+      });
+
+      return removedMembers;
+    }),
+
+  deleteGroup: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // Check if user has permission to delete the group
+      const userMembership = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: userId,
+          role: "ADMIN", // You may want to check if user is admin
+        },
+      });
+
+      if (!userMembership) {
+        throw new Error("You don't have permission to delete this group");
+      }
+
+      // 1. Delete all group messages
+      await ctx.db.groupMessage.deleteMany({
+        where: {
+          groupId: input.groupId,
+        },
+      });
+
+      // 2. Delete all group tasks
+      await ctx.db.groupTask.deleteMany({
+        where: {
+          groupId: input.groupId,
+        },
+      });
+
+      // 3. Delete all group media
+      await ctx.db.groupMedia.deleteMany({
+        where: {
+          groupId: input.groupId,
+        },
+      });
+
+      // 4. Delete all group members
+      await ctx.db.groupMember.deleteMany({
+        where: {
+          groupId: input.groupId,
+        },
+      });
+
+      // 5. Finally delete the group itself
+      const deletedGroup = await ctx.db.group.delete({
+        where: {
+          id: input.groupId,
+        },
+      });
+
+      return deletedGroup;
+    }),
+
+  getUserGroupRole: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      const groupMember = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: userId,
+        },
+      });
+
+      return groupMember?.role ?? null;
     }),
 });

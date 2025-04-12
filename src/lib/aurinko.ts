@@ -69,11 +69,8 @@ export const getAurinkoAuthUrl = async (
       "https://www.googleapis.com/auth/calendar.readonly",
       "https://www.googleapis.com/auth/calendar",
     ].join(" "),
-    recycle,
-    accountId,
     ensureScopes: "true",
     ensureAccess: "true",
-    authEmail,
     returnUrl: `${env.NEXT_PUBLIC_URL}/api/aurinko/callback`,
   });
 

@@ -206,6 +206,7 @@ const TextEditor = ({
   readOnly = false,
   className,
   placeholder = "Enter some text…",
+  hideToggle = false,
 }: TextEditorProps) => {
   // Apply the lists plugin
   const editor = useMemo(() => withLists(withReact(createEditor())), []);
@@ -242,12 +243,13 @@ const TextEditor = ({
           }
         }}
       >
-        {!readOnly && <FormatButtons />}
+        {!readOnly && !hideToggle && <FormatButtons />}
+
         <Editable
           readOnly={readOnly}
           placeholder={readOnly ? "" : placeholder}
           style={{
-            minHeight: readOnly ? "auto" : "150px",
+            minHeight: readOnly || hideToggle ? "auto" : "150px",
             padding: readOnly ? "10px 0" : "10px",
             borderRadius: "5px",
           }}
@@ -470,4 +472,5 @@ interface TextEditorProps {
   readOnly?: boolean;
   className?: string;
   placeholder?: string;
+  hideToggle?: boolean;
 }

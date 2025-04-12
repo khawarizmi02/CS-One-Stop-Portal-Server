@@ -27,7 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MessageCircle, Router, Search, Users, X } from "lucide-react";
+import { MessageCircle, Router, Search, Users, X, Check } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import Loading from "@/components/Loading";
 import { Button } from "@/components/ui/button";
@@ -272,6 +272,7 @@ interface CreateGroupDialogProps {
 const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
   const router = useRouter();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: availableUsers, isLoading: loadingUsers } =
     api.user.getAll.useQuery(undefined, {
@@ -297,6 +298,28 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
     },
   });
 
+  const selectedMembers = form.watch("members");
+
+  // Filter users based on search term
+  const filteredUsers = availableUsers?.filter((user) =>
+    user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const toggleSelectMember = (userId: string) => {
+    const currentMembers = form.getValues("members");
+    if (currentMembers.includes(userId)) {
+      form.setValue(
+        "members",
+        currentMembers.filter((id) => id !== userId),
+        { shouldValidate: true },
+      );
+    } else {
+      form.setValue("members", [...currentMembers, userId], {
+        shouldValidate: true,
+      });
+    }
+  };
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     mutate(values);
   };
@@ -306,7 +329,7 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
   }
 
   return (
-    <DialogContent className="max-h-[90%] overflow-y-scroll sm:max-w-[500px]">
+    <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>Create Group</DialogTitle>
         <DialogDescription>
@@ -357,39 +380,92 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
                 <FormDescription>
                   Select the users you want to add to this group.
                 </FormDescription>
-                {availableUsers?.map((item) => (
-                  <FormField
-                    key={item.id}
-                    control={form.control}
-                    name="members"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={item.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, item.id])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
-                                    );
-                              }}
+
+                <div className="flex flex-col gap-4">
+                  {/* Search input */}
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search for users..."
+                      className="pl-8"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Selected members badges */}
+                  {selectedMembers.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMembers.map((id) => {
+                        const user = availableUsers?.find(
+                          (user) => user.id === id,
+                        );
+                        return (
+                          <Badge
+                            key={id}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {user?.firstName || "User"}
+                            <X
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => toggleSelectMember(id)}
                             />
-                          </FormControl>
-                          <FormLabel className="text-sm font-normal">
-                            {item.firstName}
-                          </FormLabel>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* User selection list */}
+                  <ScrollArea className="h-64 rounded-md border">
+                    {filteredUsers && filteredUsers.length > 0 ? (
+                      <div className="flex flex-col">
+                        {filteredUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className={`flex cursor-pointer items-center justify-between border-b p-3 hover:bg-gray-50 ${
+                              selectedMembers.includes(user.id)
+                                ? "bg-gray-50"
+                                : ""
+                            }`}
+                            onClick={() => toggleSelectMember(user.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.imageUrl || ""} />
+                                <AvatarFallback>
+                                  {user.firstName?.[0] || "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">
+                                  {user.firstName || "User"}
+                                </p>
+                                {user.role && (
+                                  <p className="text-xs text-gray-500">
+                                    {user.role}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {selectedMembers.includes(user.id) && (
+                              <div className="rounded-full bg-primary p-1">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-4">
+                        <p className="text-gray-500">No users found</p>
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -399,11 +475,12 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
             <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <DialogClose asChild>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Creating..." : "Create Group"}
-              </Button>
-            </DialogClose>
+            <Button
+              type="submit"
+              disabled={isPending || selectedMembers.length === 0}
+            >
+              {isPending ? "Creating..." : "Create Group"}
+            </Button>
           </DialogFooter>
         </form>
       </Form>

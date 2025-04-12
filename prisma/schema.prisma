@@ -35,6 +35,8 @@ model User {
   GroupMessagesCreated GroupMessage[]
   GroupTasksCreated    GroupTask[]
   GroupMediaCreated    GroupMedia[]
+	CommentVotes        CommentVote[]
+	ForumVotes          ForumVote[]
 }
 
 enum role {
@@ -84,6 +86,90 @@ model RSVP {
   eventId String
 }
 
+// model Forum {
+//   id          String   @id @default(cuid())
+//   title       String
+//   description Json     @db.JsonB()
+//   imageUrl    String?
+//   createdBy   User     @relation(fields: [createdById], references: [id])
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @default(now())
+
+//   createdById String
+
+//   Comments ForumComment[]
+// }
+
+// model ForumComment {
+//   id        String         @id @default(cuid())
+//   content   Json           @db.JsonB()
+//   imageUrl  String?
+//   createdBy User           @relation(fields: [createdById], references: [id])
+//   forum     Forum          @relation(fields: [forumId], references: [id])
+//   parent    ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+//   replies   ForumComment[] @relation("CommentReplies")
+//   createdAt DateTime       @default(now())
+//   updatedAt DateTime       @updatedAt
+
+//   createdById String
+//   forumId     String
+//   parentId    String?
+// }
+
+// Add this to your schema.prisma file
+
+model CommentVote {
+  id        String   @id @default(cuid())
+  value     Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User         @relation(fields: [userId], references: [id])
+  comment   ForumComment @relation(fields: [commentId], references: [id])
+
+  userId    String
+  commentId String
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+}
+
+// Also update your ForumComment model to include votes
+model ForumComment {
+  id        String         @id @default(cuid())
+  content   Json           @db.JsonB()
+  imageUrl  String?
+  createdBy User           @relation(fields: [createdById], references: [id])
+  forum     Forum          @relation(fields: [forumId], references: [id])
+  parent    ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   ForumComment[] @relation("CommentReplies")
+  votes     CommentVote[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  createdById String
+  forumId     String
+  parentId    String?
+}
+
+// You might also want to add voting to the Forum model itself
+model ForumVote {
+  id        String   @id @default(cuid())
+  value     Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User  @relation(fields: [userId], references: [id])
+  forum  Forum @relation(fields: [forumId], references: [id])
+
+  userId  String
+  forumId String
+
+  @@unique([userId, forumId])
+  @@index([forumId])
+}
+
+// And update your Forum model
 model Forum {
   id          String   @id @default(cuid())
   title       String
@@ -96,22 +182,7 @@ model Forum {
   createdById String
 
   Comments ForumComment[]
-}
-
-model ForumComment {
-  id        String         @id @default(cuid())
-  content   Json           @db.JsonB()
-  imageUrl  String?
-  createdBy User           @relation(fields: [createdById], references: [id])
-  forum     Forum          @relation(fields: [forumId], references: [id])
-  parent    ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   ForumComment[] @relation("CommentReplies")
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  createdById String
-  forumId     String
-  parentId    String?
+  votes    ForumVote[]
 }
 
 model Group {

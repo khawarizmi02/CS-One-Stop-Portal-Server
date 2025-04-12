@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const forumRouter = createTRPCRouter({
@@ -11,6 +10,11 @@ export const forumRouter = createTRPCRouter({
       },
       include: {
         createdBy: true,
+        _count: {
+          select: {
+            Comments: true,
+          },
+        },
       },
     });
 
@@ -31,9 +35,6 @@ export const forumRouter = createTRPCRouter({
       if (!authorId) {
         throw new Error("Not authenticated");
       }
-
-      // Log the authorId to verify it
-      console.log("authorId: ", authorId);
 
       // Check if the authorId exists in the User table
       const userExists = await ctx.db.user.findUnique({
@@ -60,7 +61,8 @@ export const forumRouter = createTRPCRouter({
     .input(
       z.object({
         forumId: z.string(),
-        commentText: z.string(),
+        content: z.array(z.any()),
+        parentId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -70,15 +72,52 @@ export const forumRouter = createTRPCRouter({
         throw new Error("Not authenticated");
       }
 
+      // Validate parentId if provided
+      if (input.parentId) {
+        const parentComment = await ctx.db.forumComment.findUnique({
+          where: { id: input.parentId },
+        });
+
+        if (!parentComment) {
+          throw new Error("Parent comment not found");
+        }
+      }
+
       const comment = await ctx.db.forumComment.create({
         data: {
-          content: input.commentText,
+          content: input.content,
           createdById: authorId,
           forumId: input.forumId,
+          parentId: input.parentId,
         },
       });
 
       return comment;
+    }),
+
+  voteForumComment: protectedProcedure
+    .input(
+      z.object({
+        commentId: z.string(),
+        direction: z.enum(["up", "down"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) {
+        throw new Error("Not authenticated");
+      }
+
+      // Here you would implement the actual vote saving logic
+      // This is a simplified example - you'd need to add a CommentVote model
+      // to your schema to properly track votes
+
+      return {
+        success: true,
+        commentId: input.commentId,
+        direction: input.direction,
+      };
     }),
 
   getForumById: protectedProcedure
@@ -92,7 +131,11 @@ export const forumRouter = createTRPCRouter({
           Comments: {
             include: {
               createdBy: true,
-              replies: true,
+              replies: {
+                include: {
+                  createdBy: true,
+                },
+              },
             },
             orderBy: {
               createdAt: "desc",

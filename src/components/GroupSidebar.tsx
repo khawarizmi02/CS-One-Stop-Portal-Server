@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import {
@@ -8,18 +8,60 @@ import {
   Folder,
   CircleChevronLeft,
   UsersRound,
+  Trash,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { ConfirmationDialog } from "./ConfirmationDialogs";
 
 interface GroupSidebarProps {
   className?: string;
 }
 
 export function GroupSidebar({ className }: GroupSidebarProps) {
+  const { toast } = useToast();
   const router = useRouter();
   const { groupId } = useParams();
   const pathname = usePathname();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  if (!groupId || typeof groupId !== "string" || Array.isArray(groupId)) {
+    return null;
+  }
+
+  const { data: UserRole } = api.group.getUserGroupRole.useQuery({
+    groupId: Array.isArray(groupId) ? groupId[0] : groupId || "",
+  });
+
+  const { mutate: DeleteGroupMutation } = api.group.deleteGroup.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Group deleted",
+        description: "The group has been deleted successfully.",
+        variant: "default",
+      });
+      router.push("/group");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting group",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    DeleteGroupMutation({
+      groupId: Array.isArray(groupId) ? groupId[0] : groupId,
+    });
+    setIsDeleteDialogOpen(false);
+  };
 
   const groupPage = pathname.split("/")[3]; // Extract the current page (e.g., "chat", "task", etc.)
 
@@ -77,14 +119,36 @@ export function GroupSidebar({ className }: GroupSidebarProps) {
             className={cn(
               "flex cursor-pointer flex-row items-start gap-2 rounded-md p-2",
               groupPage === item.href
-                ? "bg-gray-200 text-black" // Highlight active item
+                ? "bg-gray-200 text-black"
                 : "hover:bg-gray-100",
             )}
           >
             {item.icon} {item.name}
           </Link>
         ))}
+        <div>
+          {UserRole === "ADMIN" && (
+            <button
+              className="mt-4 flex w-full cursor-pointer flex-row items-center gap-2 rounded-md border-2 border-red-500 p-2 text-red-500 transition-colors duration-200 hover:bg-muted hover:text-red-600"
+              onClick={handleDeleteClick}
+            >
+              <Trash className="h-4 w-4" />
+              Delete Group
+            </button>
+          )}
+        </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Group"
+        description="Are you sure you want to delete this group? This action will delete all messages, tasks, media, and cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }
