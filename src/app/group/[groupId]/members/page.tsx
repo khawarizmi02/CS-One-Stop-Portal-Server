@@ -89,7 +89,7 @@ const GroupMembersPage = () => {
   return (
     <div className="flex h-screen w-full flex-col pt-6">
       {/* Header */}
-      <div className="flex h-12 items-center justify-between border-b border-[#e3e5e8] bg-white px-4 shadow-sm">
+      <div className="flex h-12 items-center justify-between border-b border-[#e3e5e8] bg-white px-4 shadow-xs">
         <div className="flex items-center">
           <Users className="mr-2 h-5 w-5 text-gray-500" />
           <h3 className="font-semibold">Group Members</h3>
@@ -207,7 +207,7 @@ const GroupMembersPage = () => {
             {groupMembers.map((member) => (
               <div
                 key={member.id}
-                className="flex flex-col items-center rounded-lg border p-4 shadow-sm"
+                className="flex flex-col items-center rounded-lg border p-4 shadow-xs"
               >
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={member.imageUrl || ""} />

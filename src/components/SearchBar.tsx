@@ -41,7 +41,7 @@ const SearchBar = () => {
   }, [setIsSearching, searchValue, isSearching, document.activeElement]);
 
   return (
-    <div className="bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="bg-background/95 p-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <motion.div className="relative" layoutId="search-bar">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input

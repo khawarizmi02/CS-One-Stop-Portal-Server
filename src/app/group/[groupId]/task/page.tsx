@@ -53,12 +53,12 @@ const TaskPage = () => {
 
   return (
     <div className="container mx-auto h-full py-6">
-      <div className="flex h-12 items-center border-b border-[#e3e5e8] bg-white px-4 shadow-sm">
+      <div className="flex h-12 items-center border-b border-[#e3e5e8] bg-white px-4 shadow-xs">
         <Hash className="mr-2 h-5 w-5 text-gray-500" />
         <h3 className="font-semibold">tasks-list</h3>
       </div>
 
-      <div className="my-4 flex items-start justify-start gap-2 border-b border-[#e3e5e8] bg-white pb-4 shadow-sm">
+      <div className="my-4 flex items-start justify-start gap-2 border-b border-[#e3e5e8] bg-white pb-4 shadow-xs">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">

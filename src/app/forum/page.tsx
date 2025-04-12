@@ -37,7 +37,7 @@ export default function Forum() {
       <div className="flex flex-col gap-4">
         {isLoading &&
           Array.from({ length: 3 }).map((_, index) => (
-            <Card className="flex flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow">
+            <Card className="flex flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm">
               <div className="flex flex-auto flex-col gap-2">
                 <div className="flex h-[60px] flex-row items-center justify-start gap-2">
                   <Skeleton className="h-[60px] w-[60px] rounded-full bg-slate-300" />
@@ -56,7 +56,7 @@ export default function Forum() {
           <Card
             onClick={() => router.push(`/forum/${forum.id}`)}
             key={forum.id}
-            className="flex cursor-pointer flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow hover:bg-gray-100"
+            className="flex cursor-pointer flex-row gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm hover:bg-gray-100"
           >
             <div className="flex flex-auto flex-col gap-2">
               <div className="flex h-[60px] flex-row items-center justify-start gap-2">

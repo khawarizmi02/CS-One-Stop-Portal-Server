@@ -167,8 +167,8 @@ const GroupList = ({ groups, isLoading }: GroupListProps) => {
             onClick={() => router.push(`/group/${group.id}/chat`)}
             className="overflow-hidden transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-primary/20"
           >
-            <div className="flex h-24 items-center justify-center bg-gradient-to-r from-primary/10 to-secondary/10">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-primary shadow">
+            <div className="flex h-24 items-center justify-center bg-linear-to-r from-primary/10 to-secondary/10">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-primary shadow-sm">
                 {group.name.substring(0, 2).toUpperCase()}
               </div>
             </div>

@@ -185,7 +185,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                   value={comment.content}
                   onChange={() => {}}
                   readOnly={true}
-                  className="border-none !p-0"
+                  className="border-none p-0!"
                 />
               </div>
 
