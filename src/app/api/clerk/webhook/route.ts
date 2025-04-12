@@ -28,7 +28,7 @@ const CreateUser = async (data: any) => {
   const imageUrl = data.image_url;
   const userId = data.id;
   const clerkId = data.id;
-  const role = "user";
+  const role = "student";
 
   const user: Prisma.UserCreateInput = {
     id: userId,
@@ -50,7 +50,7 @@ const CreateUser = async (data: any) => {
     });
 
     // Update user role metadata in Clerk
-    await updateUserRoleMetadata(userId, role);
+    await updateUserRoleMetadata({ userId, role });
 
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {
@@ -86,7 +86,7 @@ const UpdateUser = async (data: any) => {
       data: user,
     });
 
-    await updateUserRoleMetadata(userId, role);
+    await updateUserRoleMetadata({ userId, role });
 
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {
