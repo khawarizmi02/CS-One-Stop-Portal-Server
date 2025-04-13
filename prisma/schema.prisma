@@ -35,8 +35,9 @@ model User {
   GroupMessagesCreated GroupMessage[]
   GroupTasksCreated    GroupTask[]
   GroupMediaCreated    GroupMedia[]
-	CommentVotes        CommentVote[]
-	ForumVotes          ForumVote[]
+  CommentVotes         CommentVote[]
+  ForumVotes           ForumVote[]
+  chatbotInteraction   ChatbotInteraction?
 }
 
 enum role {
@@ -86,46 +87,14 @@ model RSVP {
   eventId String
 }
 
-// model Forum {
-//   id          String   @id @default(cuid())
-//   title       String
-//   description Json     @db.JsonB()
-//   imageUrl    String?
-//   createdBy   User     @relation(fields: [createdById], references: [id])
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @default(now())
-
-//   createdById String
-
-//   Comments ForumComment[]
-// }
-
-// model ForumComment {
-//   id        String         @id @default(cuid())
-//   content   Json           @db.JsonB()
-//   imageUrl  String?
-//   createdBy User           @relation(fields: [createdById], references: [id])
-//   forum     Forum          @relation(fields: [forumId], references: [id])
-//   parent    ForumComment?  @relation("CommentReplies", fields: [parentId], references: [id])
-//   replies   ForumComment[] @relation("CommentReplies")
-//   createdAt DateTime       @default(now())
-//   updatedAt DateTime       @updatedAt
-
-//   createdById String
-//   forumId     String
-//   parentId    String?
-// }
-
-// Add this to your schema.prisma file
-
 model CommentVote {
   id        String   @id @default(cuid())
-  value     Int      // 1 for upvote, -1 for downvote
+  value     Int // 1 for upvote, -1 for downvote
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User         @relation(fields: [userId], references: [id])
-  comment   ForumComment @relation(fields: [commentId], references: [id])
+  user    User         @relation(fields: [userId], references: [id])
+  comment ForumComment @relation(fields: [commentId], references: [id])
 
   userId    String
   commentId String
@@ -155,12 +124,12 @@ model ForumComment {
 // You might also want to add voting to the Forum model itself
 model ForumVote {
   id        String   @id @default(cuid())
-  value     Int      // 1 for upvote, -1 for downvote
+  value     Int // 1 for upvote, -1 for downvote
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User  @relation(fields: [userId], references: [id])
-  forum  Forum @relation(fields: [forumId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  forum Forum @relation(fields: [forumId], references: [id])
 
   userId  String
   forumId String
@@ -371,6 +340,19 @@ model EmailAttachment {
   contentLocation String?
   Email           Email   @relation(fields: [emailId], references: [id])
   emailId         String
+}
+
+model ChatbotInteraction {
+  id String @id @default(cuid())
+
+  day   String
+  count Int    @default(1)
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@unique([day, userId])
+  @@index([day, userId])
 }
 
 enum Sensitivity {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSignedURL } from "@/actions/s3Actions"; // Import the S3 utility
+import { deleteFileFromS3, getSignedURL } from "@/actions/s3Actions"; // Import the S3 utility
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -413,5 +413,141 @@ export const groupRouter = createTRPCRouter({
       });
 
       return groupMember?.role ?? null;
+    }),
+
+  getGroupMedia: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // Check if user is a member of the group
+      const isMember = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId,
+        },
+      });
+
+      if (!isMember) {
+        throw new Error(
+          "You don't have permission to view media in this group",
+        );
+      }
+
+      const media = await ctx.db.groupMedia.findMany({
+        where: {
+          groupId: input.groupId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          createdBy: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+
+      return media.map((item) => ({
+        id: item.id,
+        mediaType: item.mediaType,
+        mediaUrl: item.mediaUrl,
+        createdAt: item.createdAt,
+        createdById: item.createdById,
+        createdByName: item.createdBy.firstName
+          ? `${item.createdBy.firstName} ${item.createdBy.lastName || ""}`
+          : "Unknown",
+        fileName: item.mediaUrl.split("/").pop() || "File",
+      }));
+    }),
+
+  deleteMedia: protectedProcedure
+    .input(
+      z.object({
+        mediaId: z.string().nonempty(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // Find the media to get the group ID and the media URL
+      const media = await ctx.db.groupMedia.findUnique({
+        where: { id: input.mediaId },
+        include: {
+          group: {
+            select: {
+              createdById: true,
+            },
+          },
+        },
+      });
+
+      if (!media) {
+        throw new Error("Media not found");
+      }
+
+      // Check permissions (as you already have)
+      const isCreator = media.createdById === userId;
+      const isGroupCreator = media.group.createdById === userId;
+
+      const isAdmin = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: media.groupId,
+          userId: userId,
+          role: "ADMIN",
+        },
+      });
+
+      if (!isCreator && !isGroupCreator && !isAdmin) {
+        throw new Error("You don't have permission to delete this media");
+      }
+
+      // Extract the key from the media URL
+      // The key is everything after the bucket name in the S3 URL
+      const mediaUrl = media.mediaUrl;
+      const urlParts = mediaUrl.split("/");
+      // Find the index after the bucket name or extract from the path as needed
+      // This depends on your URL structure
+      const key = mediaUrl.includes("group-media")
+        ? `group-media/${urlParts[urlParts.length - 1]}`
+        : urlParts[urlParts.length - 1];
+
+      // Delete the file from S3
+      if (!key) {
+        throw new Error("Invalid key for S3 deletion");
+      }
+      const s3DeleteResult = await deleteFileFromS3(key);
+
+      if (s3DeleteResult.failure) {
+        console.error("Error deleting file from S3:", s3DeleteResult.failure);
+        // You can decide whether to continue with database deletion or throw an error
+        // throw new Error(s3DeleteResult.failure);
+      }
+
+      // Delete the media entry from the database
+      const deletedMedia = await ctx.db.groupMedia.delete({
+        where: { id: input.mediaId },
+      });
+
+      // Also find and delete any messages that reference this media
+      await ctx.db.groupMessage.deleteMany({
+        where: {
+          groupId: media.groupId,
+          mediaUrl: media.mediaUrl,
+        },
+      });
+
+      return deletedMedia;
     }),
 });

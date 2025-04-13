@@ -20,6 +20,7 @@ import { getAurinkoAuthUrl } from "@/lib/aurinko";
 import { ThreadList } from "@/components/ThreadList";
 import SearchBar from "@/components/SearchBar";
 import ThreadDisplay from "@/components/ThreadDisplay";
+import AskAI from "@/components/AskAI";
 
 export default function MailPage() {
   const { toast } = useToast();
@@ -94,7 +95,7 @@ export default function MailPage() {
   if (!account) {
     return (
       <div className="flex h-full flex-col items-center justify-center">
-        <div className="mb-3 text-muted-foreground">
+        <div className="text-muted-foreground mb-3">
           Account is not linked yet
         </div>
         <Button
@@ -121,7 +122,7 @@ export default function MailPage() {
   if (!accountId) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="mb-3 text-muted-foreground">
+        <div className="text-muted-foreground mb-3">
           Account is not linked yet
         </div>
         <Button
@@ -230,6 +231,7 @@ export default function MailPage() {
               <Separator />
               <EmailSidebar isCollapsed={isCollapsed} />
               <div className="flex-1"></div>
+              <AskAI isCollapsed={isCollapsed} />
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />

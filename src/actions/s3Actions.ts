@@ -1,7 +1,11 @@
 // app/actions/s3Actions.ts
 "use server";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  S3Client,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createS3Client } from "@/lib/server/s3Client.server";
 import { env } from "@/env";
@@ -42,6 +46,37 @@ export async function getSignedURL(
     console.error("Error generating signed URL:", error);
     return {
       failure: `Error generating signed URL: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+export async function deleteFileFromS3(
+  key: string,
+): Promise<SignedURLResponse> {
+  if (!s3Client) {
+    const clientInitResult = initializeS3Client();
+    if (clientInitResult.failure) {
+      return clientInitResult;
+    }
+  }
+
+  try {
+    if (!s3Client) {
+      throw new Error("S3 client is not initialized");
+    }
+
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(deleteCommand);
+
+    return { success: { url: `File with key ${key} deleted successfully` } };
+  } catch (error) {
+    console.error("Error deleting file from S3:", error);
+    return {
+      failure: `Error deleting file from S3: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
