@@ -13,6 +13,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const router = useRouter();
   const [userRole, setUserRole] = useLocalStorage("userRole", "");
+  const { data: userInfo } = api.user.getUserInfo.useQuery();
   const { mutate } = api.user.updateUserRole.useMutation({
     onSuccess: () => {
       toast({
@@ -36,22 +37,17 @@ const Dashboard = () => {
     fetchUserRole();
   }, []);
 
+  useEffect(() => {
+    if (userInfo) {
+      setUserRole(userInfo.role);
+    }
+  }, [userInfo, setUserRole]);
+
   // if (userRole === "admin") router.push("/admin");
 
   return (
     <div>
-      <h1>Dashboard</h1>
-      <Button
-        onClick={() => {
-          const userId = "user_2vJ0DIHpFqKiBwjK4V0N1BlfPR7";
-          mutate({ userId, role: "student" });
-        }}
-      >
-        update user role
-      </Button>
-      <div>
-        <UserButton />
-      </div>
+      <h3>Hello {userInfo?.firstName}, hope you have a good day.</h3>
     </div>
   );
 };

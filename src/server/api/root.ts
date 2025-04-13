@@ -8,6 +8,7 @@ import { userRouter } from "./routers/user";
 import { mailRouter } from "./routers/mail";
 import { searchRouter } from "./routers/search";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { adminRouter } from "./routers/admin";
 
 /**
  * This is the primary router for your server.
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   message: messageRouter,
   mail: mailRouter,
   search: searchRouter,
+  admin: adminRouter,
 });
 
 // export type definition of API

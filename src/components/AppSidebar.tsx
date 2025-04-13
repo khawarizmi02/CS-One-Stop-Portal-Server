@@ -57,11 +57,11 @@ export function AppSidebar({
     },
     { name: "Group", icon: <Users className="mr-2 h-4 w-4" />, href: "/group" },
     { name: "Email", icon: <Mail className="mr-2 h-4 w-4" />, href: "/email" },
-    {
-      name: "File",
-      icon: <FileText className="mr-2 h-4 w-4" />,
-      href: "/file",
-    },
+    // {
+    //   name: "File",
+    //   icon: <FileText className="mr-2 h-4 w-4" />,
+    //   href: "/file",
+    // },
   ];
 
   const { pageName } = usePageName();

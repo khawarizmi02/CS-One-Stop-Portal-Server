@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 
 import {
   Form,
@@ -35,15 +35,56 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { DefaultImage } from "@/constant";
 import { JsonValue } from "@prisma/client/runtime/library";
+import { type Announcement } from "@prisma/client";
 
 const Announcement = () => {
   const router = useRouter();
   const { data, isLoading } = api.announcement.getALl.useQuery();
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto min-h-screen bg-gray-50 px-6 py-6">
+        <div className="mb-8 flex items-start justify-between border-b border-gray-500 pb-4">
+          <h2>Announcements</h2>
+          <Dialog>
+            <DialogTrigger asChild>
+              <AuthButton roles={["admin", "lecturer"]}>
+                Create Announcement
+              </AuthButton>
+            </DialogTrigger>
+            <CreateAnnouncementForm />
+          </Dialog>
+        </div>
+        <p className="text-center text-gray-500">Loading announcements...</p>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="container mx-auto min-h-screen bg-gray-50 px-6 py-6">
+        <div className="mb-8 flex items-start justify-between border-b border-gray-500 pb-4">
+          <h2>Announcements</h2>
+          <Dialog>
+            <DialogTrigger asChild>
+              <AuthButton roles={["admin", "lecturer"]}>
+                Create Announcement
+              </AuthButton>
+            </DialogTrigger>
+            <CreateAnnouncementForm />
+          </Dialog>
+        </div>
+        <p className="text-center text-gray-500">
+          No announcements yet. Create one to get started!
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-6 py-6">
+    <div className="container mx-auto min-h-screen bg-gray-50 px-6 py-6">
       <div className="mb-8 flex items-start justify-between border-b border-gray-500 pb-4">
         <h2>Announcements</h2>
-
         <Dialog>
           <DialogTrigger asChild>
             <AuthButton roles={["admin", "lecturer"]}>
@@ -53,8 +94,7 @@ const Announcement = () => {
           <CreateAnnouncementForm />
         </Dialog>
       </div>
-
-      <section className="grid grid-cols-2 gap-2">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data?.map((announcement) => (
           <AnnouncementCard key={announcement.id} announcement={announcement} />
         ))}
@@ -66,6 +106,15 @@ const Announcement = () => {
 export default Announcement;
 
 const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
+  // Assuming announcement has a createdAt field for the timestamp
+  const formattedDate = announcement.createdAt
+    ? new Date(announcement.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Unknown date";
+
   return (
     <Dialog>
       <DialogTrigger>
@@ -81,18 +130,40 @@ const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{announcement.title}</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold text-gray-800">
+            {announcement.title}
+          </DialogTitle>
+          <div className="mt-2 flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage
+                src={announcement.createdBy?.imageUrl ?? DefaultImage.src}
+                alt={`user-${announcement.createdBy.firstName}-${announcement.createdBy.lastName}`}
+              />
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium text-gray-700">
+                {announcement.createdBy.firstName}{" "}
+                {announcement.createdBy.lastName}
+              </p>
+              <p className="text-xs text-gray-500">{formattedDate}</p>
+            </div>
+          </div>
         </DialogHeader>
-        <DialogDescription>
-          <TextEditor
-            value={announcement.content}
-            onChange={() => {}}
-            readOnly={true}
-          />
+        <hr className="my-4 border-gray-200" />
+        <DialogDescription className="max-h-[60vh] overflow-y-auto">
+          <div className="prose prose-sm max-w-none">
+            <TextEditor
+              value={announcement.content}
+              onChange={() => {}}
+              readOnly={true}
+            />
+          </div>
         </DialogDescription>
-        <DialogFooter>
+        <DialogFooter className="mt-4">
           <DialogClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button variant="outline" className="w-full sm:w-auto">
+              Close
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -101,16 +172,7 @@ const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
 };
 
 interface AnnouncementCardProps {
-  announcement: {
-    id: string;
-    title: string;
-    content: JsonValue;
-    createdBy: {
-      firstName: string | null;
-      lastName: string | null;
-      imageUrl: string | null;
-    };
-  };
+  announcement: RouterOutputs["announcement"]["getALl"][number];
 }
 
 const CreateAnnouncementForm = () => {

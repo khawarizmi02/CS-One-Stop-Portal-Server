@@ -169,6 +169,7 @@ layer(base);
 @layer base {
   * {
     @apply border-border;
+    font-family: 'Poppins', sans-serif;
   }
   body {
     @apply bg-background text-foreground;
@@ -215,6 +216,15 @@ h3 {
   background-color: #dadada;
   border-radius: 4px;
   padding: 0px 2px;
+}
+
+.content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
+}
+.content p {
+  margin-bottom: 1rem;
 }
 
 /*
@@ -465,6 +475,7 @@ h3 {
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: 'Poppins', sans-serif;
   }
   body {
     @apply bg-background text-foreground;

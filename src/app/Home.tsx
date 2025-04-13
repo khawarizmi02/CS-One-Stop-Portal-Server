@@ -12,7 +12,7 @@ import Logo from "../../public/logo.svg";
 const Home = () => {
   return (
     <div
-      className={`${Layout.center} min-h-screen min-w-full bg-slate-100`}
+      className={`flex min-h-screen min-w-full flex-col items-center justify-center bg-slate-100`}
       style={{
         backgroundImage: `url(${HomeBg.src})`,
         backgroundSize: "cover",
@@ -24,7 +24,7 @@ const Home = () => {
           <Image src={Logo} alt="logo" />
           <div>
             <h1 className="h1 text-secondary">CS ONE STOP PORTAL</h1>
-            <h3 className="uppercase text-secondary">
+            <h3 className="text-secondary uppercase">
               Portal for computer science community
             </h3>
           </div>

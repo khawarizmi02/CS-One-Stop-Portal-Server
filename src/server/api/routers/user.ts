@@ -24,6 +24,34 @@ export const userRouter = createTRPCRouter({
     }
   }),
 
+  getUserInfo: publicProcedure.query(async ({ ctx }) => {
+    try {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) {
+        console.error(
+          "Authentication error: ctx.auth is undefined or userId is missing",
+          ctx.auth,
+        );
+        throw new Error("Not authenticated");
+      }
+
+      const user = await ctx.db.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        console.error("User not found for ID:", userId);
+        throw new Error("User not found");
+      }
+
+      return user;
+    } catch (error) {
+      console.error("Error in getUserInfo procedure:", error);
+      throw error;
+    }
+  }),
+
   updateUserRole: protectedProcedure
     .input(
       z.object({
