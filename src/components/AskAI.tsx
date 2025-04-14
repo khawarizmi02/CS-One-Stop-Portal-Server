@@ -198,7 +198,7 @@ const AskAI = ({ isCollapsed }: Props) => {
                 >
                   What can I ask?
                 </span>
-                <span
+                {/* <span
                   onClick={() =>
                     handleInputChange({
                       target: {
@@ -209,7 +209,7 @@ const AskAI = ({ isCollapsed }: Props) => {
                   className="rounded-md bg-gray-800 px-2 py-1 text-xs text-gray-200"
                 >
                   When is my next flight?
-                </span>
+                </span> */}
                 <span
                   onClick={() =>
                     handleInputChange({
