@@ -49,7 +49,18 @@ export const adminRouter = createTRPCRouter({
         },
       });
 
-      return { student, lecturer, admin };
+      const newUser = await ctx.db.user.findMany({
+        where: { role: "new" },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          createdAt: true,
+        },
+      });
+
+      return { student, lecturer, admin, newUser };
     } catch (error) {
       console.error("Error in getUserInfo procedure:", error);
       throw error;

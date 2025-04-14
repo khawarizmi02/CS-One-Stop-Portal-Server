@@ -190,7 +190,6 @@ const EmailEditor = ({
             editor?.commands.clearContent();
             await handleSend(value);
           }}
-          isLoading={isSending}
         >
           Send
         </Button>

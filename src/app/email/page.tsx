@@ -92,6 +92,14 @@ export default function MailPage() {
     }
   }, [accountId]);
 
+  if (isLoadingAccount) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
+
   if (!account) {
     return (
       <div className="flex h-full flex-col items-center justify-center">
@@ -107,14 +115,6 @@ export default function MailPage() {
         >
           Link Account
         </Button>
-      </div>
-    );
-  }
-
-  if (isLoadingAccount) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loading />
       </div>
     );
   }

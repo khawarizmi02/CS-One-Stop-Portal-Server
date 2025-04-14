@@ -82,7 +82,6 @@ export async function POST(req: Request) {
 
     const chatbotInteraction = await db.chatbotInteraction.findUnique({
       where: {
-        day: new Date().toDateString(),
         userId,
       },
     });
@@ -110,6 +109,11 @@ export async function POST(req: Request) {
     });
     console.log(context.hits.length + " hits found");
 
+    console.log(
+      "context",
+      context.hits.map((hit) => hit.document),
+    );
+
     const prompt = {
       role: "system",
       content: `You are an AI email assistant embedded in an email client app. Your purpose is to help the user compose emails by answering questions, providing suggestions, and offering relevant information based on the context of their previous emails.
@@ -129,7 +133,7 @@ export async function POST(req: Request) {
     };
 
     const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         prompt,
         ...messages.filter((message: Message) => message.role === "user"),
@@ -143,7 +147,6 @@ export async function POST(req: Request) {
       await db.chatbotInteraction.update({
         where: {
           userId,
-          day: today,
         },
         data: {
           count: {

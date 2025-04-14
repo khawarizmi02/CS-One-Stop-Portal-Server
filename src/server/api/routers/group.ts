@@ -550,4 +550,24 @@ export const groupRouter = createTRPCRouter({
 
       return deletedMedia;
     }),
+
+  getUserGroupTaskNumber: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      const taskCount = await ctx.db.groupTask.count({
+        where: {
+          groupId: input.groupId,
+        },
+      });
+
+      return taskCount;
+    }),
 });

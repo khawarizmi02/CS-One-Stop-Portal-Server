@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   }, [data, setUserId]);
 
   // Mutation to update user role
-  const { mutate: updateUserRole } = api.admin.updateUserRole.useMutation({
+  const { mutate: updateUserRole } = api.user.updateUserRole.useMutation({
     onSuccess: () => {
       toast.success("User role updated successfully!");
     },
@@ -68,8 +68,8 @@ export default function AdminDashboard() {
       role: string;
       email: string;
     }> = [];
-    (["student", "lecturer", "admin"] as Array<keyof typeof userStats>).forEach(
-      (role) => {
+    (["student", "lecturer", "admin", "new"] as Array<keyof typeof userStats>) // Ensure "new" is included here
+      .forEach((role) => {
         const roleUsers = (
           userStats?.[role] as
             | Array<{
@@ -86,8 +86,7 @@ export default function AdminDashboard() {
           email: user.email,
         }));
         if (roleUsers) users.push(...roleUsers);
-      },
-    );
+      });
     return users;
   }, [userStats]);
 
@@ -395,7 +394,11 @@ function UserTable({
               ? "bg-blue-600 text-white"
               : row.getValue("role") === "lecturer"
                 ? "bg-green-600 text-white"
-                : "bg-purple-600 text-white"
+                : row.getValue("role") === "student"
+                  ? "bg-purple-600 text-white"
+                  : row.getValue("role") === "new"
+                    ? "bg-gray-600 text-white"
+                    : "bg-gray-600 text-white"
           }`}
         >
           {row.getValue("role")}
@@ -427,6 +430,7 @@ function UserTable({
             <SelectItem value="student">Student</SelectItem>
             <SelectItem value="lecturer">Lecturer</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="new">New</SelectItem>
           </SelectContent>
         </Select>
       ),

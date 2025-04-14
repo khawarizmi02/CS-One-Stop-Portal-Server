@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { updateUserRoleMetadata } from "@/lib/clerk";
 import { update } from "@orama/orama";
+import { auth } from "@clerk/nextjs/server";
 
 export const userRouter = createTRPCRouter({
   getUserId: publicProcedure.query(async ({ ctx }) => {
@@ -56,11 +57,14 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string().optional(),
-        role: z.enum(["admin", "student", "lecturer"]),
+        role: z.enum(["admin", "student", "lecturer", "new"]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;
+
+      const { userId: adminId } = await auth();
+      console.log(adminId);
       if (ctx.auth?.userId) {
         console.error("User ID is missing in context");
         throw new Error("Not authenticated");
