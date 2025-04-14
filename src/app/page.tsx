@@ -68,9 +68,7 @@ const HomePage = () => {
             {/* User greeting and tasks */}
             <div className="bg-opacity-90 mb-6 flex items-center justify-between rounded-lg bg-white p-5 shadow-lg">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Hello Khawa,
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-900">Hello,</h2>
                 <p className="text-gray-700">Hope you have a good day today!</p>
               </div>
               {/* <div className="min-w-32 rounded-md border border-orange-200 bg-white p-4 text-center shadow-sm">
