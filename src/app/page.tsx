@@ -88,10 +88,10 @@ const HomePage = () => {
           <div className="flex flex-row items-center justify-center py-8">
             <Image src={Logo} alt="logo" />
             <div className="ml-3">
-              <h1 className="text-3xl font-bold text-slate-800">
+              <h1 className="text-3xl font-bold text-slate-100">
                 CS ONE STOP PORTAL
               </h1>
-              <h3 className="text-slate-800 uppercase">
+              <h3 className="text-slate-100 uppercase">
                 PORTAL FOR COMPUTER SCIENCE COMMUNITY
               </h3>
             </div>
