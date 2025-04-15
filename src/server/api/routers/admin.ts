@@ -173,10 +173,16 @@ export const adminRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { userId, role } = input;
       // Update the user's role in your database (e.g., using Prisma)
-      await ctx.db.user.update({
-        where: { id: userId },
-        data: { role },
-      });
-      return { success: true };
+      // await ctx.db.user.update({
+      //   where: { id: userId },
+      //   data: { role },
+      // });
+      try {
+        await updateUserRoleMetadata({ userId, role });
+        return { success: true };
+      } catch (error) {
+        console.error("Error updating user role", error);
+        throw new Error("Failed to update user role");
+      }
     }),
 });

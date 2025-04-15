@@ -14,6 +14,7 @@ import {
   LogOut,
   Bell,
   Menu,
+  Ruler,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -57,17 +63,22 @@ export function AppSidebar({
     },
     { name: "Group", icon: <Users className="mr-2 h-4 w-4" />, href: "/group" },
     { name: "Email", icon: <Mail className="mr-2 h-4 w-4" />, href: "/email" },
-    // {
-    //   name: "File",
-    //   icon: <FileText className="mr-2 h-4 w-4" />,
-    //   href: "/file",
-    // },
+    {
+      name: "Privacy",
+      icon: <FileText className="mr-2 h-4 w-4" />,
+      href: "/privacy",
+    },
+    {
+      name: "Term of Service",
+      icon: <Ruler className="mr-2 h-4 w-4" />,
+      href: "/term-of-service",
+    },
   ];
 
   const { pageName } = usePageName();
   const [userRole] = useLocalStorage("userRole", "");
 
-  // if (userRole === "admin") return null;
+  if (userRole === "admin") return null;
 
   if (pageName === "privacy" || pageName === "term-of-service") return null;
 

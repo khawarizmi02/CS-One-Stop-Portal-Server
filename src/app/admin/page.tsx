@@ -39,10 +39,12 @@ export default function AdminDashboard() {
     if (data) setUserId(data.id);
   }, [data, setUserId]);
 
-  // Mutation to update user role
-  const { mutate: updateUserRole } = api.user.updateUserRole.useMutation({
+  // Use the correct TRPC procedure for updating user role
+  const { mutate: updateUserRole } = api.admin.updateUserRole.useMutation({
     onSuccess: () => {
       toast.success("User role updated successfully!");
+      // Refetch user stats to update the UI
+      refetchUserStats();
     },
     onError: (error) => {
       toast.error(`Failed to update user role: ${error.message}`);
@@ -60,33 +62,61 @@ export default function AdminDashboard() {
     visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
   };
 
-  // Prepare user data for the table
+  // Prepare user data for the table - fixed to include "new" users
   const userData = React.useMemo(() => {
+    if (!userStats) return [];
+
     const users: Array<{
       id: string;
       name: string;
       role: string;
       email: string;
     }> = [];
-    (["student", "lecturer", "admin", "new"] as Array<keyof typeof userStats>) // Ensure "new" is included here
-      .forEach((role) => {
-        const roleUsers = (
-          userStats?.[role] as
-            | Array<{
-                id: string;
-                firstName: string;
-                lastName: string;
-                email: string;
-              }>
-            | undefined
-        )?.map((user) => ({
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          role,
-          email: user.email,
-        }));
-        if (roleUsers) users.push(...roleUsers);
-      });
+
+    // Process student users
+    if (userStats.student) {
+      const studentUsers = userStats.student.map((user) => ({
+        id: user.id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        role: "student",
+        email: user.email,
+      }));
+      users.push(...studentUsers);
+    }
+
+    // Process lecturer users
+    if (userStats.lecturer) {
+      const lecturerUsers = userStats.lecturer.map((user) => ({
+        id: user.id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        role: "lecturer",
+        email: user.email,
+      }));
+      users.push(...lecturerUsers);
+    }
+
+    // Process admin users
+    if (userStats.admin) {
+      const adminUsers = userStats.admin.map((user) => ({
+        id: user.id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        role: "admin",
+        email: user.email,
+      }));
+      users.push(...adminUsers);
+    }
+
+    // Process new users - Fixed to use newUser instead of new
+    if (userStats.newUser) {
+      const newUsers = userStats.newUser.map((user) => ({
+        id: user.id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        role: "new",
+        email: user.email,
+      }));
+      users.push(...newUsers);
+    }
+
     return users;
   }, [userStats]);
 
@@ -103,7 +133,7 @@ export default function AdminDashboard() {
           Hello {data?.firstName}, hope you have a great day! 👋
         </h3>
         <p className="mt-2 text-sm text-gray-500">
-          Here’s a quick overview of your platform’s activity.
+          Here's a quick overview of your platform's activity.
         </p>
       </motion.div>
 
@@ -129,6 +159,9 @@ export default function AdminDashboard() {
           <p className="text-lg font-semibold text-gray-700">
             Admins: {userStats?.admin.length ?? 0}
           </p>
+          {/* <p className="text-lg font-semibold text-gray-700">
+            New Users: {userStats?.newUser.length ?? 0}
+          </p> */}
         </StatCard>
 
         <StatCard
@@ -360,7 +393,7 @@ function Section({
   );
 }
 
-// User Table Component
+// User Table Component - Updated to handle role changes correctly
 function UserTable({
   data,
   isLoading,
@@ -421,7 +454,7 @@ function UserTable({
             const userId = row.original.id;
             updateUserRole({ userId, role: value });
           }}
-          defaultValue={row.getValue("role")}
+          defaultValue={row.original.role}
         >
           <SelectTrigger className="bg-gray-800 text-white">
             <SelectValue placeholder="Select role" />
@@ -430,7 +463,6 @@ function UserTable({
             <SelectItem value="student">Student</SelectItem>
             <SelectItem value="lecturer">Lecturer</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="new">New</SelectItem>
           </SelectContent>
         </Select>
       ),
