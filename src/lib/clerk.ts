@@ -13,20 +13,20 @@ export const updateUserRoleMetadata = async ({
   userId,
   role,
 }: updateUserRoleMetadataProps) => {
-  const { userId: authUserId } = await auth();
+  // const { userId: authUserId } = await auth();
 
-  if (!userId) {
-    console.error("User ID is required");
-    throw new Error("User ID is required");
-  }
-  if (!role) {
-    console.error("Role is required");
-    throw new Error("Role is required");
-  }
-  if (userId !== authUserId) {
-    console.error("User ID does not match authenticated user");
-    throw new Error("User ID does not match authenticated user");
-  }
+  // if (!userId) {
+  //   console.error("User ID is required");
+  //   throw new Error("User ID is required");
+  // }
+  // if (!role) {
+  //   console.error("Role is required");
+  //   throw new Error("Role is required");
+  // }
+  // if (userId !== authUserId) {
+  //   console.error("User ID does not match authenticated user");
+  //   throw new Error("User ID does not match authenticated user");
+  // }
   if (!env.CLERK_SECRET_KEY) {
     console.error("CLERK_SECRET_KEY is not defined");
     throw new Error("CLERK_SECRET_KEY is not defined");

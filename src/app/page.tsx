@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth, UserButton, SignInButton, SignedOut } from "@clerk/nextjs";
@@ -10,8 +11,20 @@ import { Layout } from "@/styles/page-layout";
 
 import HomeBg from "../../public/Home-BG.png";
 import Logo from "../../public/logo.svg";
+import { api } from "@/trpc/react";
 
 const HomePage = () => {
+  const [role, setRole] = React.useState<string | null>(null);
+  const { data } = api.user.getUserInfo.useQuery();
+
+  useEffect(() => {
+    async function fetchRole() {
+      const response = await fetch("/api/getRole");
+      const data = await response.json();
+      setRole(data.role ?? "");
+    }
+    fetchRole();
+  }, []);
   const sidebarItems = [
     // { name: "Home", icon: <Home className="h-6 w-6" />, href: "/" },
     {
@@ -27,30 +40,31 @@ const HomePage = () => {
     { name: "Group", icon: <Users className="h-6 w-6" />, href: "/group" },
     { name: "Email", icon: <Mail className="h-6 w-6" />, href: "/email" },
   ];
-  <SignedOut>
-    <Home />
-  </SignedOut>;
 
   return (
     <div
       className="flex min-h-screen min-w-full flex-col items-center justify-center"
-      style={{
-        backgroundImage: `url(${HomeBg.src})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundColor: "rgba(0, 0, 20, 0.7)",
-        backgroundBlendMode: "overlay",
-      }}
+      style={
+        !role
+          ? {
+              backgroundImage: `url(${HomeBg.src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundColor: "rgba(0, 0, 20, 0.7)",
+              backgroundBlendMode: "overlay",
+            }
+          : undefined
+      }
     >
       <div className={`${Layout.mwidth} flex w-full flex-col items-center`}>
         {/* Header with logo */}
         <div className="flex flex-row items-center justify-center py-8">
           <Image src={Logo} alt="logo" />
           <div className="ml-3">
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-slate-800">
               CS ONE STOP PORTAL
             </h1>
-            <h3 className="text-white uppercase">
+            <h3 className="text-slate-800 uppercase">
               PORTAL FOR COMPUTER SCIENCE COMMUNITY
             </h3>
           </div>
@@ -68,8 +82,10 @@ const HomePage = () => {
             {/* User greeting and tasks */}
             <div className="bg-opacity-90 mb-6 flex items-center justify-between rounded-lg bg-white p-5 shadow-lg">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Hello,</h2>
-                <p className="text-gray-700">Hope you have a good day today!</p>
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Hello, {data?.firstName}
+                </h2>
+                <p className="text-gray-800">Hope you have a good day today!</p>
               </div>
               {/* <div className="min-w-32 rounded-md border border-orange-200 bg-white p-4 text-center shadow-sm">
               <h3 className="text-3xl font-bold text-gray-800">1</h3>
@@ -82,9 +98,9 @@ const HomePage = () => {
             {/* Apps section */}
             <div className="bg-opacity-95 mt-8 overflow-hidden rounded-lg bg-white shadow-xl">
               <div className="bg-blue-600 p-4">
-                <h2 className="text-center text-xl font-semibold text-white">
+                <h3 className="text-center text-xl font-semibold text-white">
                   Apps
-                </h2>
+                </h3>
               </div>
 
               <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2 md:grid-cols-4">
