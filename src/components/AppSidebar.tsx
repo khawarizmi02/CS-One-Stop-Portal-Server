@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "usehooks-ts";
+import { api } from "@/trpc/react";
 
 interface AppSidebarProps {
   className?: string;
@@ -75,10 +76,20 @@ export function AppSidebar({
     },
   ];
 
+  const { data } = api.user.getUserInfo.useQuery();
+
   const { pageName } = usePageName();
-  const [userRole] = useLocalStorage("userRole", "");
+  const [userRole, setuserRole] = useLocalStorage("userRole", "");
+
+  React.useEffect(() => {
+    if (data?.role) {
+      setuserRole(data.role);
+    }
+  }, [data, setuserRole]);
 
   if (userRole === "admin") return null;
+
+  if (userRole === "new") return null;
 
   if (pageName === "privacy" || pageName === "term-of-service") return null;
 

@@ -28,7 +28,7 @@ const CreateUser = async (data: any) => {
   const imageUrl = data.image_url;
   const userId = data.id;
   const clerkId = data.id;
-  const role = "student";
+  const role = "new";
 
   const user: Prisma.UserCreateInput = {
     id: userId,

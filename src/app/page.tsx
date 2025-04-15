@@ -2,9 +2,16 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth, UserButton, SignInButton, SignedOut } from "@clerk/nextjs";
+import {
+  useAuth,
+  UserButton,
+  SignInButton,
+  SignedOut,
+  SignOutButton,
+} from "@clerk/nextjs";
 import { Home, Bell, MessageSquare, Users, Mail } from "lucide-react";
 import { SignedIn } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/styles/page-layout";
@@ -12,19 +19,25 @@ import { Layout } from "@/styles/page-layout";
 import HomeBg from "../../public/Home-BG.png";
 import Logo from "../../public/logo.svg";
 import { api } from "@/trpc/react";
+import { NewUser } from "./NewUser";
 
 const HomePage = () => {
   const [role, setRole] = React.useState<string | null>(null);
   const { data } = api.user.getUserInfo.useQuery();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchRole() {
       const response = await fetch("/api/getRole");
       const data = await response.json();
       setRole(data.role ?? "");
+      if (data.role === "admin") {
+        router.push("/admin");
+      }
     }
     fetchRole();
-  }, []);
+  }, [router]);
+
   const sidebarItems = [
     // { name: "Home", icon: <Home className="h-6 w-6" />, href: "/" },
     {
@@ -40,6 +53,19 @@ const HomePage = () => {
     { name: "Group", icon: <Users className="h-6 w-6" />, href: "/group" },
     { name: "Email", icon: <Mail className="h-6 w-6" />, href: "/email" },
   ];
+
+  if (role === "new") {
+    return (
+      <div className="flex min-h-screen min-w-full flex-col items-center justify-center">
+        <div className={`${Layout.mwidth} flex w-full flex-col items-center`}>
+          <NewUser />
+          <Button variant="destructive" className="mt-10 px-5 py-5">
+            <SignOutButton />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -58,18 +84,18 @@ const HomePage = () => {
     >
       <div className={`${Layout.mwidth} flex w-full flex-col items-center`}>
         {/* Header with logo */}
-        <div className="flex flex-row items-center justify-center py-8">
-          <Image src={Logo} alt="logo" />
-          <div className="ml-3">
-            <h1 className="text-3xl font-bold text-slate-800">
-              CS ONE STOP PORTAL
-            </h1>
-            <h3 className="text-slate-800 uppercase">
-              PORTAL FOR COMPUTER SCIENCE COMMUNITY
-            </h3>
-          </div>
-        </div>
         <SignedOut>
+          <div className="flex flex-row items-center justify-center py-8">
+            <Image src={Logo} alt="logo" />
+            <div className="ml-3">
+              <h1 className="text-3xl font-bold text-slate-800">
+                CS ONE STOP PORTAL
+              </h1>
+              <h3 className="text-slate-800 uppercase">
+                PORTAL FOR COMPUTER SCIENCE COMMUNITY
+              </h3>
+            </div>
+          </div>
           <div className="flex flex-col items-center">
             <SignInButton>
               <Button className="mt-10 px-5 py-5">Login Now</Button>
@@ -78,6 +104,17 @@ const HomePage = () => {
         </SignedOut>
 
         <SignedIn>
+          <div className="flex flex-row items-center justify-center py-8">
+            <Image src={Logo} alt="logo" />
+            <div className="ml-3">
+              <h1 className="text-3xl font-bold text-slate-800">
+                CS ONE STOP PORTAL
+              </h1>
+              <h3 className="text-slate-800 uppercase">
+                PORTAL FOR COMPUTER SCIENCE COMMUNITY
+              </h3>
+            </div>
+          </div>
           <div className="w-full max-w-4xl">
             {/* User greeting and tasks */}
             <div className="bg-opacity-90 mb-6 flex items-center justify-between rounded-lg bg-white p-5 shadow-lg">
