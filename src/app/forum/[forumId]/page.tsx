@@ -121,7 +121,7 @@ const ForumContent = () => {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"></div>
       </div>
     );
   }
@@ -181,7 +181,7 @@ const ForumContent = () => {
 
           {/* Post image if exists */}
           {forum.imageUrl && (
-            <div className="border-b border-t border-gray-100">
+            <div className="border-t border-b border-gray-100">
               <div className="relative flex justify-center bg-gray-50">
                 <Image
                   src={forum.imageUrl}
@@ -270,7 +270,7 @@ const ForumContent = () => {
         {/* Comment input */}
         <div className="mb-4 rounded-md border border-gray-200 bg-white p-3">
           <p className="mb-2 text-sm text-gray-500">
-            Comment as{" "}
+            Comment to{" "}
             <span className="font-medium text-blue-500">
               {forum?.createdBy.firstName} {forum?.createdBy.lastName}
             </span>
