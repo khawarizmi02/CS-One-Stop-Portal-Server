@@ -7,13 +7,15 @@ import { EmailMessage } from "./types";
 import { db } from "@/server/db";
 
 export const getAurinkoAuthUrl = async (
-  serviceType: "Google" | "Microsoft",
+  serviceType: "Google" | "Office365",
 ) => {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
   let recycle = "false";
   let accountId = "";
+
+  console.log("serviceType", serviceType);
 
   // Get user email
   const user = await db.user.findUnique({
@@ -59,16 +61,26 @@ export const getAurinkoAuthUrl = async (
       "Mail.All",
     ].join(" "),
     responseType: "code",
-    nativeScopes: [
-      "https://www.googleapis.com/auth/gmail.readonly",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/gmail.modify",
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.send",
-      "https://www.googleapis.com/auth/calendar.readonly",
-      "https://www.googleapis.com/auth/calendar",
-    ].join(" "),
+    nativeScopes:
+      serviceType === "Office365"
+        ? [
+            "https://graph.microsoft.com/Calendars.ReadWrite",
+            "https://graph.microsoft.com/email",
+            "https://graph.microsoft.com/Mail.ReadWrite",
+            "https://graph.microsoft.com/Mail.Send",
+            "https://graph.microsoft.com/User.Read",
+            "offline_access",
+          ].join(" ")
+        : [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.compose",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/calendar.readonly",
+            "https://www.googleapis.com/auth/calendar",
+          ].join(" "),
     ensureScopes: "true",
     ensureAccess: "true",
     returnUrl: `${env.NEXT_PUBLIC_URL}/api/aurinko/callback`,

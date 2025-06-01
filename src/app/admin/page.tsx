@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SignOutButton } from "@clerk/nextjs";
 
 export default function AdminDashboard() {
   const { data, isLoading } = api.user.getUserInfo.useQuery();
@@ -135,6 +136,11 @@ export default function AdminDashboard() {
         <p className="mt-2 text-sm text-gray-500">
           Here's a quick overview of your platform's activity.
         </p>
+        <SignOutButton>
+          <Button variant="destructive" className="mt-10 px-5 py-5">
+            Logout
+          </Button>
+        </SignOutButton>
       </motion.div>
 
       {/* Statistics Section */}

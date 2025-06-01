@@ -1,9 +1,10 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   useAuth,
+  useUser,
   UserButton,
   SignInButton,
   SignedOut,
@@ -19,49 +20,81 @@ import { Layout } from "@/styles/page-layout";
 import HomeBg from "../../public/Home-BG.png";
 import Logo from "../../public/logo.svg";
 import { api } from "@/trpc/react";
-import { NewUser } from "./NewUser";
+
+const sidebarItems = [
+  {
+    name: "Announcement",
+    icon: <Bell className="h-6 w-6" />,
+    href: "/announcement",
+  },
+  {
+    name: "Forum",
+    icon: <MessageSquare className="h-6 w-6" />,
+    href: "/forum",
+  },
+  { name: "Group", icon: <Users className="h-6 w-6" />, href: "/group" },
+  { name: "Email", icon: <Mail className="h-6 w-6" />, href: "/email" },
+];
 
 const HomePage = () => {
+  const { isSignedIn } = useUser();
   const [role, setRole] = React.useState<string | null>(null);
-  const { data } = api.user.getUserInfo.useQuery();
+  const { data } = api.user.getUserInfo.useQuery(undefined, {
+    enabled: isSignedIn === true,
+  });
   const router = useRouter();
 
   useEffect(() => {
     async function fetchRole() {
+      if (!isSignedIn) return;
       const response = await fetch("/api/getRole");
       const data = await response.json();
       setRole(data.role ?? "");
       if (data.role === "admin") {
         router.push("/admin");
       }
+
+      if (data.role === "new") {
+        router.push("/restricted");
+      }
     }
+    if (!isSignedIn) return;
     fetchRole();
-  }, [router]);
+  }, [router, isSignedIn]);
 
-  const sidebarItems = [
-    // { name: "Home", icon: <Home className="h-6 w-6" />, href: "/" },
-    {
-      name: "Announcement",
-      icon: <Bell className="h-6 w-6" />,
-      href: "/announcement",
-    },
-    {
-      name: "Forum",
-      icon: <MessageSquare className="h-6 w-6" />,
-      href: "/forum",
-    },
-    { name: "Group", icon: <Users className="h-6 w-6" />, href: "/group" },
-    { name: "Email", icon: <Mail className="h-6 w-6" />, href: "/email" },
-  ];
-
-  if (role === "new") {
+  if (!isSignedIn) {
     return (
-      <div className="flex min-h-screen min-w-full flex-col items-center justify-center">
+      <div
+        className="flex min-h-screen min-w-full flex-col items-center justify-center"
+        style={
+          !role
+            ? {
+                backgroundImage: `url(${HomeBg.src})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundColor: "rgba(0, 0, 20, 0.7)",
+                backgroundBlendMode: "overlay",
+              }
+            : undefined
+        }
+      >
         <div className={`${Layout.mwidth} flex w-full flex-col items-center`}>
-          <NewUser />
-          <Button variant="destructive" className="mt-10 px-5 py-5">
-            <SignOutButton />
-          </Button>
+          <div className="flex flex-row items-center justify-center py-8">
+            <Image src={Logo} alt="logo" />
+            <div className="ml-3">
+              <h1 className="text-3xl font-bold text-slate-100">
+                CS ONE STOP PORTAL
+              </h1>
+              <h3 className="text-slate-100 uppercase">
+                PORTAL FOR COMPUTER SCIENCE COMMUNITY
+              </h3>
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <SignInButton>
+              <Button className="mt-10 px-5 py-5">Login Now</Button>
+            </SignInButton>
+          </div>
         </div>
       </div>
     );
@@ -83,27 +116,6 @@ const HomePage = () => {
       }
     >
       <div className={`${Layout.mwidth} flex w-full flex-col items-center`}>
-        {/* Header with logo */}
-        <SignedOut>
-          <div className="flex flex-row items-center justify-center py-8">
-            <Image src={Logo} alt="logo" />
-            <div className="ml-3">
-              <h1 className="text-3xl font-bold text-slate-100">
-                CS ONE STOP PORTAL
-              </h1>
-              <h3 className="text-slate-100 uppercase">
-                PORTAL FOR COMPUTER SCIENCE COMMUNITY
-              </h3>
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <SignInButton>
-              <Button className="mt-10 px-5 py-5">Login Now</Button>
-            </SignInButton>
-          </div>
-        </SignedOut>
-
-        <SignedIn>
           <div className="flex flex-row items-center justify-center py-8">
             <Image src={Logo} alt="logo" />
             <div className="ml-3">
@@ -170,7 +182,6 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-        </SignedIn>
       </div>
     </div>
   );

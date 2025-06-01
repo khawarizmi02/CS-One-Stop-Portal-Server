@@ -108,7 +108,8 @@ export default function MailPage() {
         </div>
         <Button
           onClick={async () => {
-            const authUrl = await getAurinkoAuthUrl("Google");
+            const authUrl = await getAurinkoAuthUrl("Office365");
+            console.log("authUrl", authUrl);
             window.location.href = authUrl;
           }}
           variant="default"
@@ -127,7 +128,8 @@ export default function MailPage() {
         </div>
         <Button
           onClick={async () => {
-            const authUrl = await getAurinkoAuthUrl("Google");
+            const authUrl = await getAurinkoAuthUrl("Office365");
+            console.log("authUrl", authUrl);
             window.location.href = authUrl;
           }}
           variant="default"
