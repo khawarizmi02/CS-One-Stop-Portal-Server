@@ -1,15 +1,30 @@
 import type {
   EmailHeader,
   EmailMessage,
+  CalendarEvent,
   SyncResponse,
+  SyncUpdatedCalendarResponse,
   SyncUpdatedResponse,
 } from "@/lib/types";
 import { db } from "@/server/db";
 import axios from "axios";
-import { syncEmailsToDatabase } from "./syn-to-db";
+import { syncEmailsToDatabase, syncCalendarsToDatabase } from "./syn-to-db";
 import { env } from "@/env";
+import { time } from "console";
+import { min } from "date-fns";
 
 const API_BASE_URL = env.AURINKO_API_URL;
+
+const TIMEMIN = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth() - 2,
+  1,
+).toISOString();
+const TIMEMAX = new Date(
+  new Date().getFullYear(),
+  new Date().getMonth() + 3,
+  0, // Last day of the month before the 3rd month ahead
+).toISOString();
 
 class Account {
   private token: string;
@@ -34,25 +49,157 @@ class Account {
     return response.data;
   }
 
-  async createSubscription() {
-    const webhookUrl =
-      process.env.NODE_ENV === "development"
-        ? "https://potatoes-calculator-reports-crisis.trycloudflare.com"
-        : env.NEXT_PUBLIC_URL;
-    const res = await axios.post(
-      `${env.AURINKO_API_URL}/subscriptions`,
+  async getCalendarId({
+    pageToken,
+    withShared = true,
+    mode,
+  }: {
+    pageToken?: string;
+    withShared?: boolean;
+    mode?: "user" | "group";
+  }) {
+    try {
+      const params: Record<string, string | boolean | undefined> = {
+        pageToken,
+        withShared,
+        mode,
+      };
+
+      const response = await axios.get<{
+        nextPageToken: string;
+        length: number;
+        records: Array<{
+          id: string;
+          name: string;
+          owner: string;
+          isShared: boolean;
+        }>;
+      }>(`${API_BASE_URL}/calendars`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+        params,
+      });
+
+      const calendarId = response.data.records.find(
+        (calendar) => calendar.name === "Calendar",
+      )?.id;
+      if (!calendarId) {
+        throw new Error("Primary calendar not found");
+      }
+
+      return calendarId;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error fetching calendar:",
+          JSON.stringify(error.response?.data, null, 2),
+        );
+      } else {
+        console.error("Error fetching calendar:", error);
+      }
+      throw error;
+    }
+  }
+
+  async startSyncCalendar({ calendarId }: { calendarId: string }) {
+    const params: Record<string, string> = {
+      timeMin: TIMEMIN,
+      timeMax: TIMEMAX,
+    };
+    const response = await axios.post<SyncResponse>(
+      `${API_BASE_URL}/calendars/${calendarId}/sync`,
+      {},
       {
-        resource: "/email/messages",
-        notificationUrl: webhookUrl + "/api/aurinko/webhook",
+        headers: { Authorization: `Bearer ${this.token}` },
+        params,
       },
+    );
+    return response;
+  }
+
+  async getUpdatedEvents({
+    calendarId,
+    deltaToken,
+    pageToken,
+  }: {
+    calendarId: string;
+    deltaToken?: string;
+    pageToken?: string;
+  }): Promise<SyncUpdatedCalendarResponse> {
+    const response = await axios.get<SyncUpdatedCalendarResponse>(
+      `${API_BASE_URL}/calendars/${calendarId}/sync/updated`,
       {
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "application/json",
+        headers: { Authorization: `Bearer ${this.token}` },
+        params: {
+          deltaToken,
+          pageToken,
         },
       },
     );
-    return res.data;
+
+    return response.data;
+  }
+
+  async performInitialSyncCalendar() {
+    try {
+      // Start the sync process
+      const calendarId = await this.getCalendarId({
+        mode: "user",
+        withShared: false,
+      });
+      let syncResponse = await this.startSyncCalendar({ calendarId });
+
+      // Wait until the sync is ready
+      while (!syncResponse.data.ready) {
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+        syncResponse = await this.startSyncCalendar({ calendarId });
+      }
+
+      console.log("Sync is ready. Tokens:", syncResponse.data);
+
+      // Perform initial sync of updated events
+      let storedDeltaToken: string = syncResponse.data.syncUpdatedToken;
+      let updatedResponse = await this.getUpdatedEvents({
+        calendarId,
+        deltaToken: storedDeltaToken,
+      });
+
+      if (updatedResponse.nextDeltaToken) {
+        storedDeltaToken = updatedResponse.nextDeltaToken;
+      }
+      let allEvents: SyncUpdatedCalendarResponse["records"] =
+        updatedResponse.records;
+
+      // Fetch all pages if there are more
+      while (updatedResponse.nextPageToken) {
+        updatedResponse = await this.getUpdatedEvents({
+          calendarId,
+          pageToken: updatedResponse.nextPageToken,
+        });
+        allEvents = allEvents.concat(updatedResponse.records);
+        if (updatedResponse.nextDeltaToken) {
+          storedDeltaToken = updatedResponse.nextDeltaToken;
+        }
+      }
+
+      console.log("Initial sync complete. Total events:", allEvents.length);
+
+      // Store the nextDeltaToken for future incremental syncs
+
+      return {
+        events: allEvents,
+        deltaToken: storedDeltaToken,
+        calendarId: calendarId,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error during calendar sync:",
+          JSON.stringify(error.response?.data, null, 2),
+        );
+      } else {
+        console.error("Error during calendar sync:", error);
+      }
+    }
   }
 
   async syncEmails() {
@@ -86,7 +233,7 @@ class Account {
     try {
       await syncEmailsToDatabase(allEmails, account.id);
     } catch (error) {
-      console.log("error", error);
+      throw new Error("Failed to sync emails to database");
     }
 
     // console.log('syncEmails', response)
@@ -96,6 +243,56 @@ class Account {
       },
       data: {
         nextDeltaToken: storedDeltaToken,
+      },
+    });
+  }
+
+  async syncCalendarEvents() {
+    const account = await db.account.findUnique({
+      where: {
+        token: this.token,
+      },
+    });
+
+    if (!account) throw new Error("Invalid token");
+    if (!account.nextDeltaTokenCalendar) throw new Error("No delta token");
+    if (!account.calendarId) throw new Error("No calendar ID");
+
+    let response = await this.getUpdatedEvents({
+      calendarId: account.calendarId,
+      deltaToken: account.nextDeltaTokenCalendar,
+    });
+
+    let allEvents: CalendarEvent[] = response.records;
+    let storedDeltaToken = account.nextDeltaTokenCalendar;
+    if (response.nextDeltaToken) {
+      storedDeltaToken = response.nextDeltaToken;
+    }
+
+    while (response.nextPageToken) {
+      response = await this.getUpdatedEvents({
+        calendarId: account.calendarId,
+        pageToken: response.nextPageToken,
+      });
+      allEvents = allEvents.concat(response.records);
+
+      if (response.nextDeltaToken) {
+        storedDeltaToken = response.nextDeltaToken;
+      }
+    }
+    if (!response) throw new Error("Failed to sync calendar events");
+    try {
+      await syncCalendarsToDatabase(allEvents, account.calendarId, account.id);
+    } catch (error) {
+      throw new Error("Failed to sync calendar events to database");
+    }
+
+    await db.account.update({
+      where: {
+        id: account.id,
+      },
+      data: {
+        nextDeltaTokenCalendar: storedDeltaToken,
       },
     });
   }
@@ -245,6 +442,8 @@ class Account {
       throw error;
     }
   }
+
+  async createCalendarEvent() {}
 
   async getWebhooks() {
     type Response = {

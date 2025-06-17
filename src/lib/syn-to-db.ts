@@ -1,10 +1,12 @@
 import { db } from "@/server/db";
-import type {
-  SyncUpdatedResponse,
-  EmailMessage,
-  EmailAddress,
-  EmailAttachment,
-  EmailHeader,
+import {
+  type SyncUpdatedResponse,
+  type EmailMessage,
+  type EmailAddress,
+  type EmailAttachment,
+  type CalendarEvent,
+  type EmailHeader,
+  emailAddressSchema,
 } from "./types";
 import pLimit from "p-limit";
 import { Prisma } from "@prisma/client";
@@ -326,4 +328,225 @@ async function upsertAttachment(emailId: string, attachment: EmailAttachment) {
   }
 }
 
-export { syncEmailsToDatabase };
+async function syncCalendarsToDatabase(
+  events: CalendarEvent[],
+  calendarId: string,
+  accountId: string,
+) {
+  console.log(`Syncing ${events.length} calendars to database`);
+
+  console.log("events", events);
+
+  try {
+    async function syncToDB() {
+      for (const [index, event] of events.entries()) {
+        await upsertCalendarEvent(event, index, accountId);
+      }
+    }
+
+    await Promise.all([syncToDB()]);
+  } catch (error) {
+    throw new Error(`Failed to sync calendars: ${error}`);
+  }
+}
+
+async function upsertCalendarEvent(
+  event: CalendarEvent,
+  // calendarId: string,
+  index: number,
+  accountId: string,
+) {
+  console.log(`Upserting calendar event ${index + 1}`, event);
+  try {
+    // 1. Upsert Organizer
+    const organizer = await db.emailAddress.upsert({
+      where: {
+        accountId_address: {
+          accountId: accountId,
+          address: event.organizer.emailAddress.address,
+        },
+      },
+      update: {
+        name: event.organizer.emailAddress.name,
+        raw: event.organizer.emailAddress.raw,
+      },
+      create: {
+        address: event.organizer.emailAddress.address,
+        name: event.organizer.emailAddress.name,
+        raw: event.organizer.emailAddress.raw,
+        accountId,
+      },
+    });
+
+    // 2. Upsert Attendees
+    const attendees = await Promise.all(
+      (event.meetingInfo?.attendees ?? []).map(async (attendee) => {
+        return await db.emailAddress.upsert({
+          where: {
+            accountId_address: {
+              accountId: accountId,
+              address: attendee.emailAddress.address,
+            },
+          },
+          update: {
+            name: attendee.emailAddress.name,
+            raw: attendee.emailAddress.raw,
+          },
+          create: {
+            address: attendee.emailAddress.address,
+            name: attendee.emailAddress.name,
+            raw: attendee.emailAddress.raw,
+            accountId,
+          },
+        });
+      }),
+    );
+
+    // 3. Upsert Calendar Event
+    await db.event.upsert({
+      where: { id: event.id },
+      update: {
+        calendarId: event.calendarId,
+        createdTime: event.createdTime
+          ? new Date(event.createdTime)
+          : undefined,
+        lastModifiedTime: event.lastModifiedTime
+          ? new Date(event.lastModifiedTime)
+          : undefined,
+        subject: event.subject,
+        description: event.description ?? null,
+        location: event.location ?? null,
+        startDate: event.start?.dateTime
+          ? new Date(event.start.dateTime)
+          : undefined,
+        endDate: event.end?.dateTime ? new Date(event.end.dateTime) : undefined,
+        recurrenceType: event.recurrenceType ?? null,
+        recurrence: event.recurrence
+          ? JSON.stringify(event.recurrence)
+          : undefined,
+        reminder: event.reminder ?? undefined,
+        showAs: event.showAs ?? null,
+        sensitivity: event.sensitivity ?? null,
+        categories: event.categories ?? undefined,
+        htmlLink: event.htmlLink ?? null,
+        hasAttachments: event.hasAttachments,
+        meetingInfo:
+          event.meetingInfo !== undefined
+            ? JSON.stringify(event.meetingInfo)
+            : undefined,
+        occurrenceInfo: event.occurrenceInfo
+          ? JSON.stringify(event.occurrenceInfo)
+          : undefined,
+        organizer: event.organizer
+          ? JSON.stringify(event.organizer)
+          : undefined,
+        iCalUid: event.iCalUid ?? null,
+        globalId: event.globalId ?? null,
+        targetUsers: [],
+      },
+      create: {
+        id: event.id,
+        calendarId: event.calendarId,
+        createdTime: event.createdTime
+          ? new Date(event.createdTime)
+          : undefined,
+        lastModifiedTime: event.lastModifiedTime
+          ? new Date(event.lastModifiedTime)
+          : undefined,
+        subject: event.subject,
+        description: event.description ?? null,
+        location: event.location ?? null,
+        startDate: event.start?.dateTime
+          ? new Date(event.start.dateTime)
+          : new Date(),
+        endDate: event.end?.dateTime
+          ? new Date(event.end.dateTime)
+          : new Date(),
+        recurrenceType: event.recurrenceType ?? null,
+        recurrence: event.recurrence
+          ? JSON.stringify(event.recurrence)
+          : undefined,
+        reminder: event.reminder ?? undefined,
+        showAs: event.showAs ?? null,
+        sensitivity: event.sensitivity ?? null,
+        categories: event.categories ? event.categories : undefined,
+        htmlLink: event.htmlLink ?? null,
+        hasAttachments: event.hasAttachments,
+        meetingInfo:
+          event.meetingInfo !== undefined
+            ? JSON.stringify(event.meetingInfo)
+            : undefined,
+        occurrenceInfo: event.occurrenceInfo
+          ? JSON.stringify(event.occurrenceInfo)
+          : undefined,
+        organizer: event.organizer
+          ? JSON.stringify(event.organizer)
+          : undefined,
+        iCalUid: event.iCalUid ?? null,
+        globalId: event.globalId ?? null,
+        targetUsers: [],
+        accountId,
+      },
+    });
+
+    // 4. Upsert Event Attendees
+    if (event.meetingInfo?.attendees?.length) {
+      await db.eventAttendee.deleteMany({
+        where: { eventId: event.id },
+      });
+
+      await db.eventAttendee.createMany({
+        data: event.meetingInfo.attendees.map((attendee) => ({
+          eventId: event.id,
+          email: attendee.emailAddress.address,
+          name: attendee.emailAddress.name ?? null,
+          response: attendee.response ?? null,
+          comment: attendee.comment ?? null,
+        })),
+        skipDuplicates: true, // optional safety
+      });
+    } else {
+      await db.eventAttendee.deleteMany({
+        where: { eventId: event.id },
+      });
+    }
+
+    // 5. Upsert Attachments
+    if (event.attachments && event.attachments.length > 0) {
+      for (const attachment of event.attachments) {
+        await db.eventAttachment.upsert({
+          where: { id: attachment.id },
+          update: {
+            name: attachment.name,
+            mimeType: attachment.mimeType,
+            size: attachment.size,
+            content: attachment.content,
+            contentLocation: attachment.contentLocation,
+          },
+          create: {
+            id: attachment.id,
+            eventId: event.id,
+            name: attachment.name,
+            mimeType: attachment.mimeType,
+            size: attachment.size,
+            inline: attachment.inline ?? false,
+            content: attachment.content,
+            contentLocation: attachment.contentLocation,
+          },
+        });
+      }
+    } else {
+      await db.eventAttachment.deleteMany({
+        where: { eventId: event.id },
+      });
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(`Prisma error for event ${event.id}: ${error.message}`);
+    } else {
+      console.log(`Unknown error for event ${event.id}: ${error}`);
+    }
+  }
+}
+
+export { syncEmailsToDatabase, syncCalendarsToDatabase };

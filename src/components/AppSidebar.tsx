@@ -15,6 +15,7 @@ import {
   Bell,
   Menu,
   Ruler,
+  Calendar,
 } from "lucide-react";
 import {
   Sidebar,
@@ -63,6 +64,11 @@ export function AppSidebar({
       href: "/forum",
     },
     { name: "Group", icon: <Users className="mr-2 h-4 w-4" />, href: "/group" },
+    {
+      name: "Event",
+      icon: <Calendar className="mr-2 h-4 w-4" />,
+      href: "/event",
+    },
     { name: "Email", icon: <Mail className="mr-2 h-4 w-4" />, href: "/email" },
     {
       name: "Privacy",
@@ -91,7 +97,12 @@ export function AppSidebar({
 
   if (userRole === "new") return null;
 
-  if (pageName === "privacy" || pageName === "term-of-service") return null;
+  if (
+    pageName === "privacy" ||
+    pageName === "term-of-service" ||
+    pageName === "restricted"
+  )
+    return null;
 
   return (
     <Sidebar

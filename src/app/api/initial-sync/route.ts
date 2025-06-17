@@ -1,5 +1,5 @@
 import Account from "@/lib/account";
-import { syncEmailsToDatabase } from "@/lib/syn-to-db";
+import { syncEmailsToDatabase, syncCalendarsToDatabase } from "@/lib/syn-to-db";
 import { db } from "@/server/db";
 import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
@@ -31,9 +31,22 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: "FAILED_TO_SYNC" }, { status: 500 });
 
   const { deltaToken, emails } = response;
-  console.log("emails", emails);
+
+  const calendarResponse = await account.performInitialSyncCalendar();
+  if (!calendarResponse)
+    return NextResponse.json(
+      { error: "FAILED_TO_SYNC_CALENDAR" },
+      { status: 500 },
+    );
+
+  const {
+    events,
+    deltaToken: nextDeltaTokenCalendar,
+    calendarId,
+  } = calendarResponse;
 
   await syncEmailsToDatabase(emails, accountId);
+  await syncCalendarsToDatabase(events, calendarId, accountId);
 
   await db.account.update({
     where: {
@@ -41,6 +54,8 @@ export const POST = async (req: NextRequest) => {
     },
     data: {
       nextDeltaToken: deltaToken,
+      nextDeltaTokenCalendar: nextDeltaTokenCalendar,
+      calendarId: calendarId,
     },
   });
   console.log("sync complete", deltaToken);

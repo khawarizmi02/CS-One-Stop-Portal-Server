@@ -16,6 +16,7 @@ const isPrivateRoute = createRouteMatcher([
   "/file(.*)",
   "/group(.*)",
   "/announcement(.*)",
+  "/event",
 ]);
 
 // TODO: Add more private routes as needed

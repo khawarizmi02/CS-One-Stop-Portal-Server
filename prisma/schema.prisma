@@ -26,7 +26,6 @@ model User {
 
   // Existing relations from your schema
   AnnouncementsCreated Announcement[]
-  EventsCreated        Event[]
   RSVPs                RSVP[]
   ForumsCreated        Forum[]
   ForumCommentsCreated ForumComment[]
@@ -61,20 +60,76 @@ model Announcement {
 }
 
 model Event {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  imageUrl    String?
-  startDate   DateTime
-  endDate     DateTime
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  targetUsers Json     @default("[]")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String    @id @default(cuid())
+  subject          String // maps to "subject"
+  description      String?
+  location         String?
+  imageUrl         String?
+  startDate        DateTime // maps to start.dateTime
+  endDate          DateTime // maps to end.dateTime
+  calendarId       String? // external calendar integration
+  createdTime      DateTime? // original created time from external source
+  lastModifiedTime DateTime? // external last modified time
+  recurrenceType   String? // "single", "recurring", etc.
+  recurrence       Json? // flexible storage for recurrence object
+  reminder         Json? // store overrides and default flag
+  showAs           String? // e.g., "free", "busy"
+  sensitivity      String? // e.g., "normal"
+  categories       Json? // list of tags/categories
+  htmlLink         String? // link to view in external calendar
+  hasAttachments   Boolean   @default(false)
+  meetingInfo      Json? // whole meetingInfo block
+  occurrenceInfo   Json? // whole occurrenceInfo block
+  organizer        Json? // full organizer block
+  iCalUid          String? // standard iCal UID
+  globalId         String? // external global identifier
+  targetUsers      Json      @default("[]")
 
-  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  RSVPs RSVP[]
+  account Account @relation(fields: [accountId], references: [id])
+
+  accountId String
+
+  RSVPs       RSVP[]
+	attendees   EventAttendee[]
+  attachments EventAttachment[]
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  type      String?  // Add this
+  response  String?
+  comment   String?
+  attendeePermissions Json? // Add this
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  eventId String
+
+  @@unique([eventId])
+}
+
+model EventAttachment {
+  id              String   @id @default(cuid())
+  name            String
+  mimeType        String
+  size            Int
+  inline          Boolean
+  contentId       String?
+  content         String? // optional: this could be a base64-encoded string or a URL depending on how it's handled
+  contentLocation String?
+  fileUrl         String? // if you store a downloadable link separately
+  fileType        String? // if still used
+  createdAt       DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+
+  eventId String
 }
 
 model RSVP {
@@ -235,11 +290,15 @@ model Account {
   emailAddress String
   name         String
 
-  nextDeltaToken String?
+  calendarId String?
+
+  nextDeltaToken         String?
+  nextDeltaTokenCalendar String?
 
   user           User           @relation("AccountToUser", fields: [userId], references: [id])
   threads        Thread[]
   emailAddresses EmailAddress[]
+  events         Event[]
 }
 
 model Thread {

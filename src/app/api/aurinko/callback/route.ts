@@ -9,10 +9,6 @@ import { getAccountDetails, getAurinkoToken } from "@/lib/aurinko";
 import { env } from "@/env";
 
 export const GET = async (req: NextRequest) => {
-  const { userId } = await auth();
-  if (!userId)
-    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-
   const params = req.nextUrl.searchParams;
   const status = params.get("status");
   if (status !== "success")
@@ -32,11 +28,20 @@ export const GET = async (req: NextRequest) => {
   console.log("accountDetails", accountDetails);
   console.log("token", token);
 
+  const user = await db.user.findFirst({
+    where: {
+      email: accountDetails.email,
+    },
+  });
+
+  if (!user || !user.id)
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+
   await db.account.upsert({
     where: { id: token.accountId.toString() },
     create: {
       id: token.accountId.toString(),
-      userId,
+      userId: user?.id,
       token: token.accessToken,
       provider: "Aurinko",
       emailAddress: accountDetails.email,
@@ -50,7 +55,7 @@ export const GET = async (req: NextRequest) => {
     axios
       .post(`${env.NEXT_PUBLIC_URL}/api/initial-sync`, {
         accountId: token.accountId.toString(),
-        userId,
+        userId: user.id,
       })
       .then((res) => {
         console.log(res.data);
@@ -60,5 +65,5 @@ export const GET = async (req: NextRequest) => {
       }),
   );
 
-  return NextResponse.redirect(new URL("/email", req.url));
+  return NextResponse.redirect(new URL("/", req.url));
 };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+// Email Module
 export interface SyncResponse {
   syncUpdatedToken: string;
   syncDeletedToken: string;
@@ -8,6 +9,7 @@ export interface SyncResponse {
 export interface SyncUpdatedResponse {
   nextPageToken?: string;
   nextDeltaToken: string;
+  length: number;
   records: EmailMessage[];
 }
 
@@ -81,4 +83,145 @@ export interface EmailAttachment {
 export interface EmailHeader {
   name: string;
   value: string;
+}
+
+// Calendar Module
+export interface SyncUpdatedCalendarResponse {
+  nextPageToken?: string;
+  nextDeltaToken: string;
+  length: number;
+  records: CalendarEvent[];
+}
+
+export interface CalendarEvent {
+  id: string;
+  etag: string;
+  calendarId: string;
+  createdTime: string; // <date-time>
+  lastModifiedTime: string; // <date-time>
+  subject: string;
+  description?: string;
+  location?: string;
+  start: {
+    dateOnly?: string; // <date>
+    dateTime?: string; // <date-time>
+    timezone?: string;
+  };
+  end: {
+    dateOnly?: string; // <date>
+    dateTime?: string; // <date-time>
+    timezone?: string;
+  };
+  organizer: {
+    id: string;
+    emailAddress: EmailAddress;
+  };
+  meetingInfo?: {
+    canceled: boolean;
+    attendees?: Array<{
+      id: string;
+      emailAddress: EmailAddress;
+      type: "required" | "optional" | "resource";
+      response: "accepted" | "tentative" | "declined";
+      comment?: string;
+      attendeePermissions?: Array<"inviteOthers" | "modify" | "seeOthers">;
+    }>;
+    onlineMeetingProvider?: string;
+    onlineMeetingDetails?: {
+      url?: string;
+      phone?: string;
+      pin?: string;
+      regionCode?: string;
+      sip?: string;
+      infoUrl?: string;
+    };
+  };
+
+  recurrenceType: "single" | "master" | "occurrence";
+  recurrence?: EventRecurrence;
+  reminder?: {
+    useDefault?: boolean; // Supported only for Google
+    overrides?: Array<{
+      minutes: number;
+    }>;
+  };
+  occurrenceInfo?: EventOccurrenceInfo;
+  iCalUid: string;
+  globalId: string;
+  showAs: "free" | "busy" | "tentative" | "outOfOffice" | "unknown";
+  sensitivity: "normal" | "private" | "personal" | "confidential";
+  categories?: string[];
+  htmlLink?: string;
+  hasAttachments: boolean;
+  attachments?: Array<EmailAttachment>;
+  omitted?: Array<"description" | "attendees" | "attachments">;
+}
+
+export interface EventRecurrence {
+  original: "simple" | "ical";
+  ical?: {
+    rules: string[];
+    recurrenceStart?: {
+      dateOnly?: string; // <date>
+      dateTime?: string; // <date-time>
+      timezone?: string;
+    };
+  };
+
+  simple?: {
+    pattern: {
+      frequency:
+        | "daily"
+        | "weekly"
+        | "monthly"
+        | "monthlyRelative"
+        | "yearly"
+        | "yearlyRelative";
+      interval?: number; // Default: 1
+      daysOfWeek?: Array<
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
+      >;
+      weekStart?: "monday" | "sunday";
+      dayOfMonth?: number; // [1..31]
+      monthOfYear?: number; // [1..12]
+      instance?: "first" | "second" | "third" | "fourth" | "last";
+    };
+    range?: {
+      type: "byDate" | "byCount" | "unbounded";
+      recurrenceStart?: {
+        dateOnly?: string; // <date>
+        dateTime?: string; // <date-time>
+        timezone?: string;
+      };
+      recurrenceEnd?: string; // <date>
+      count?: number; // >= 1
+    };
+    patternExclusions?: Array<{
+      dateOnly?: string; // <date>
+      dateTime?: string; // <date-time>
+      timezone?: string;
+    }>;
+  };
+}
+
+interface EventOccurrenceInfo {
+  id: string;
+  type: "regular" | "modified" | "deleted";
+  originalStart?: {
+    dateOnly?: string; // <date>
+    dateTime?: string; // <date-time>
+    timezone?: string;
+  };
+  start?: {
+    dateOnly?: string; // <date>
+    dateTime?: string; // <date-time>
+    timezone?: string;
+  };
+  masterId?: string;
 }

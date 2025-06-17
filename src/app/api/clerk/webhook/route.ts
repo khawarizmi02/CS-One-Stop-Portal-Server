@@ -40,6 +40,13 @@ const CreateUser = async (data: any) => {
     role,
   };
 
+  // Check the email if has student domain
+  if (email.endsWith("@student.usm.my")) {
+    user.role = "student";
+  } else if (email.endsWith("@usm.my")) {
+    user.role = "lecturer";
+  }
+
   try {
     await db.user.upsert({
       where: {
@@ -103,7 +110,7 @@ const DeleteUser = async (data: any) => {
     const result = await db.$transaction([
       // Delete related records where the user is the creator
       db.announcement.deleteMany({ where: { createdById: userId } }),
-      db.event.deleteMany({ where: { createdById: userId } }),
+      // db.event.deleteMany({ where: { createdById: userId } }),
       db.forum.deleteMany({ where: { createdById: userId } }),
       db.forumComment.deleteMany({ where: { createdById: userId } }),
       db.group.deleteMany({ where: { createdById: userId } }),

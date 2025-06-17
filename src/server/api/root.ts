@@ -9,6 +9,7 @@ import { mailRouter } from "./routers/mail";
 import { searchRouter } from "./routers/search";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { adminRouter } from "./routers/admin";
+import { calendarRouter } from "./routers/calendar";
 
 /**
  * This is the primary router for your server.
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   task: taskRouter,
   message: messageRouter,
   mail: mailRouter,
+  calendar: calendarRouter,
   search: searchRouter,
   admin: adminRouter,
 });

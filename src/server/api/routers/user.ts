@@ -25,6 +25,42 @@ export const userRouter = createTRPCRouter({
     }
   }),
 
+  getUserEmailProvider: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) {
+        console.error(
+          "Authentication error: ctx.auth is undefined or userId is missing",
+          ctx.auth,
+        );
+        throw new Error("Not authenticated");
+      }
+
+      const email = await ctx.db.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (!email) {
+        console.error("User not found for ID:", userId);
+        throw new Error("User not found");
+      }
+
+      let emailProvider = "unknown";
+      if (email.email.endsWith("@gmail.com")) {
+        emailProvider = "Google";
+      } else if (email.email.endsWith("usm.my")) {
+        emailProvider = "Office365";
+      }
+
+      return emailProvider;
+    } catch (error) {
+      console.error("Error in getUserEmailProvider procedure:", error);
+      throw error;
+    }
+  }),
+
   getUserInfo: publicProcedure.query(async ({ ctx }) => {
     try {
       const userId = ctx.auth?.userId;

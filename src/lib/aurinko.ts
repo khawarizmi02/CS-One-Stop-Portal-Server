@@ -48,39 +48,51 @@ export const getAurinkoAuthUrl = async (
     accountId = account?.id as string;
   }
 
+  const nativeScopesOffice = [
+    "Calendars.ReadWrite",
+    "email",
+    "Mail.ReadWrite",
+    "Mail.Send",
+    "User.Read",
+  ].join(" ");
+
+  const nativeScopesGoogle = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.compose",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar",
+  ].join(" ");
+
+  const nativeScopes =
+    serviceType === "Office365" ? nativeScopesOffice : nativeScopesGoogle;
+
+  const scopeGoogle = [
+    "Calendar.ReadWrite",
+    "Mail.ReadWrite",
+    "Mail.Send",
+    "Mail.Drafts",
+  ].join(" ");
+
+  const scopeOffice = [
+    "Calendar.Read",
+    "Calendar.ReadWrite",
+    "Mail.Read",
+    "Mail.ReadWrite",
+    "Mail.Send",
+  ].join(" ");
+
+  const scope = serviceType === "Office365" ? scopeOffice : scopeGoogle;
+
   const params = new URLSearchParams({
     clientId: env.AURINKO_CLIENT_ID as string,
     serviceType,
-    scope: [
-      "Calendar.Read",
-      "Calendar.ReadWrite",
-      "Mail.Read",
-      "Mail.ReadWrite",
-      "Mail.Send",
-      "Mail.Drafts",
-      "Mail.All",
-    ].join(" "),
+    scope,
     responseType: "code",
-    nativeScopes:
-      serviceType === "Office365"
-        ? [
-            "https://graph.microsoft.com/Calendars.ReadWrite",
-            "https://graph.microsoft.com/email",
-            "https://graph.microsoft.com/Mail.ReadWrite",
-            "https://graph.microsoft.com/Mail.Send",
-            "https://graph.microsoft.com/User.Read",
-            "offline_access",
-          ].join(" ")
-        : [
-            "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile",
-            "https://www.googleapis.com/auth/gmail.modify",
-            "https://www.googleapis.com/auth/gmail.compose",
-            "https://www.googleapis.com/auth/gmail.send",
-            "https://www.googleapis.com/auth/calendar.readonly",
-            "https://www.googleapis.com/auth/calendar",
-          ].join(" "),
+    nativeScopes,
     ensureScopes: "true",
     ensureAccess: "true",
     returnUrl: `${env.NEXT_PUBLIC_URL}/api/aurinko/callback`,
