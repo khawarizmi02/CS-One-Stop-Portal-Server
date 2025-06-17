@@ -1,6 +1,4 @@
 import { api, type RouterOutputs } from "@/trpc/react";
-import { getQueryKey } from "@trpc/react-query";
-import React from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { atom, useAtom } from "jotai";
 import { searchValueAtom } from "@/components/SearchBar";
@@ -9,29 +7,26 @@ const useEvents = () => {
   const { data: account, isLoading: isLoadingAccount } =
     api.mail.getAccount.useQuery();
   const [accountId] = useLocalStorage("accountId", "");
-  const [tab] = useLocalStorage("tab", "inbox");
-  const [done] = useLocalStorage("threadDone", false);
   const [searchValue] = useAtom(searchValueAtom);
 
   const {
-    data: threads,
+    data: events,
     isFetching,
     refetch,
-  } = api.mail.getThreads.useQuery(
+  } = api.calendar.getEvents.useQuery(
     {
       accountId,
-      done,
-      tab,
+      searchValue,
     },
     {
-      enabled: !!accountId && !!tab,
+      enabled: !!accountId,
       // placeholderData: (e) => e,
       refetchInterval: 1000 * 60 * 1,
     },
   );
 
   return {
-    threads,
+    events,
     isFetching,
     refetch,
     account,

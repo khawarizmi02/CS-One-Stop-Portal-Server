@@ -1,49 +1,9 @@
 import Account from "@/lib/account";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { authoriseAccountAccess } from "./mail";
+import { z } from "zod";
 
 export const calendarRouter = createTRPCRouter({
-  getCalendars: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.auth?.userId;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db.account.findFirst({
-      where: {
-        userId: ctx.auth?.userId ?? undefined,
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const account = new Account(user.token);
-
-    const calendars = await account.getCalendars({});
-
-    if (!calendars) {
-      throw new Error("Failed to fetch calendars");
-    }
-
-    /*
-     * The Calendars will return an array of calendar objects.
-     * Each calendar object will contain details such as id, name, and other metadata.
-     * You can then use this data to display the calendars in your application.
-     * The important calendar that will be used for creating events is the primary calendar (Calendar).
-     * So, this function will find the calendarId with name "Calendar" and return it.
-     */
-
-    const calendar = calendars.records.find((cal) => cal.name === "Calendar");
-
-    if (!calendar) {
-      throw new Error("Primary calendar not found");
-    }
-
-    return calendar;
-  }),
-
   createEvent: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.auth?.userId;
 
@@ -73,109 +33,126 @@ export const calendarRouter = createTRPCRouter({
     return event;
   }),
 
-  startSync: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.auth?.userId;
+  syncEvents: protectedProcedure
+    .input(
+      z.object({
+        accountId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
 
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+      if (!userId) {
+        throw new Error("Not authenticated");
+      }
 
-    const user = await ctx.db.account.findFirst({
-      where: {
-        userId: ctx.auth?.userId ?? undefined,
-      },
-    });
+      const user = await ctx.db.account.findFirst({
+        where: {
+          userId: ctx.auth?.userId ?? undefined,
+        },
+      });
 
-    if (!user) {
-      throw new Error("User not found");
-    }
+      if (!user) {
+        throw new Error("User not found");
+      }
 
-    const account = new Account(user.token);
+      const authAccount = await authoriseAccountAccess(input.accountId, userId);
+      if (!authAccount) throw new Error("Invalid token");
+      const account = new Account(user.token);
 
-    const calendars = await account.getCalendars({});
+      account.syncCalendarEvents();
+    }),
 
-    if (!calendars) {
-      throw new Error("Failed to fetch calendars");
-    }
+  getEvents: protectedProcedure
+    .input(
+      z.object({
+        accountId: z.string(),
+        searchValue: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
 
-    /*
-     * The Calendars will return an array of calendar objects.
-     * Each calendar object will contain details such as id, name, and other metadata.
-     * You can then use this data to display the calendars in your application.
-     * The important calendar that will be used for creating events is the primary calendar (Calendar).
-     * So, this function will find the calendarId with name "Calendar" and return it.
-     */
+      if (!userId) {
+        throw new Error("Not authenticated");
+      }
 
-    const calendar = calendars.records.find((cal) => cal.name === "Calendar");
+      const user = await ctx.db.account.findFirst({
+        where: {
+          userId: ctx.auth?.userId ?? undefined,
+        },
+      });
 
-    if (!calendar) {
-      throw new Error("Primary calendar not found");
-    }
+      if (!user) {
+        throw new Error("User not found");
+      }
 
-    const syncResponse = await account.startSyncCalendar({
-      calendarId: calendar.id,
-    });
-  }),
+      const authAccount = await authoriseAccountAccess(input.accountId, userId);
+      if (!authAccount) throw new Error("Invalid token");
 
-  syncEvents: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.auth?.userId;
+      const events = await ctx.db.event.findMany({
+        where: {
+          accountId: input.accountId,
+        },
+        orderBy: {
+          createdTime: "desc",
+        },
+        select: {
+          id: true,
+          subject: true,
+          startDate: true,
+          endDate: true,
+          organizer: true,
+          createdTime: true,
+          lastModifiedTime: true,
+          meetingInfo: true,
+        },
+      });
 
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+      if (!events) {
+        throw new Error("Failed to fetch events");
+      }
 
-    const user = await ctx.db.account.findFirst({
-      where: {
-        userId: ctx.auth?.userId ?? undefined,
-      },
-    });
+      return events;
+    }),
 
-    if (!user) {
-      throw new Error("User not found");
-    }
+  getEventById: protectedProcedure
+    .input(
+      z.object({
+        accountId: z.string(),
+        eventId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
 
-    const account = new Account(user.token);
+      if (!userId) {
+        throw new Error("Not authenticated");
+      }
 
-    // Example event synchronization logic
-    const calendarId =
-      "AAMkAGViMDYzMGQxLThmMjAtNGE1ZS1hZWY2LWM1ZGQwNzFlZTIzZABGAAAAAABW7UpMa1o4TrlX7_P9wvkaBwCX9qxsigVRSKukONpRuS9dAAAAAAEGAACX9qxsigVRSKukONpRuS9dAAAAAAoKAAA="; // Replace with actual calendar ID
-    const syncResponse = await account.syncCalendarEvents({ calendarId });
+      const userExists = await ctx.db.user.findUnique({
+        where: { id: userId },
+      });
 
-    if (!syncResponse) {
-      throw new Error("Failed to sync events");
-    }
+      if (!userExists) {
+        throw new Error("User not found");
+      }
+      const account = await authoriseAccountAccess(input.accountId, userId);
+      if (!account) throw new Error("Invalid token");
 
-    return syncResponse;
-  }),
+      const event = await ctx.db.event.findUnique({
+        where: {
+          id: input.eventId,
+          accountId: input.accountId,
+        },
+        include: {
+          attendees: true,
+          attachments: true,
+        },
+      });
 
-  getEvents: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.auth?.userId;
+      if (!event) throw new Error("Event not found");
 
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db.account.findFirst({
-      where: {
-        userId: ctx.auth?.userId ?? undefined,
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const account = new Account(user.token);
-
-    // Example event fetching logic
-    const calendarId =
-      "AAMkAGViMDYzMGQxLThmMjAtNGE1ZS1hZWY2LWM1ZGQwNzFlZTIzZABGAAAAAABW7UpMa1o4TrlX7_P9wvkaBwCX9qxsigVRSKukONpRuS9dAAAAAAEGAACX9qxsigVRSKukONpRuS9dAAAAAAoKAAA="; // Replace with actual calendar ID
-    const events = await account.getEvents({ calendarId });
-
-    if (!events) {
-      throw new Error("Failed to fetch events");
-    }
-
-    return events;
-  }),
+      return event;
+    }),
 });

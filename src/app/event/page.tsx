@@ -10,6 +10,8 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SearchBar from "@/components/SearchBar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus, RefreshCw } from "lucide-react";
@@ -17,9 +19,16 @@ import { Calendar as CalendarComp } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
 import Loading from "@/components/Loading";
+import { EventList } from "@/components/EventList";
+import { EventDisplay } from "@/components/EventDisplay";
+import useEvents from "@/hooks/use-events";
+import type { JsonValue } from "@prisma/client/runtime/library";
+import { useLocalStorage } from "usehooks-ts";
 
 export default function EventPage() {
   const { toast } = useToast();
+  const { events, isFetching } = useEvents();
+  const [accountId, setAccountId] = useLocalStorage("accountId", "");
   const defaultLayout = [25, 35, 40];
   const defaultCollapsed = false;
   const navCollapsedSize = 4;
@@ -32,24 +41,17 @@ export default function EventPage() {
   );
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-  // API calls
-  // const { data: calendars, isLoading: isLoadingCalendars } =
-  //   api.calendar.getCalendars.useQuery();
-  const { data: events, isLoading: isLoadingEvents } =
-    api.calendar.getEvents.useQuery();
-
-  const { mutate: refreshCalendars } = api.calendar.getCalendars.useMutation({
+  const { mutate: refreshCalendars } = api.calendar.syncEvents.useMutation({
     onSuccess: () => {
       toast({
         title: "Calendars refreshed",
-        description: "Your calendars have been updated",
+        description: "Your calendars have been refreshed",
       });
       setIsRefreshing(false);
     },
     onError: (error) => {
       toast({
         title: "Refresh failed",
-        description: error.message,
         variant: "destructive",
       });
       setIsRefreshing(false);
@@ -71,8 +73,17 @@ export default function EventPage() {
   }, []);
 
   const handleRefreshCalendars = () => {
+    console.log("accounntId", accountId);
+    if (!accountId) {
+      toast({
+        title: "Error",
+        description: "No account selected",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsRefreshing(true);
-    refreshCalendars();
+    refreshCalendars({ accountId: accountId });
   };
 
   const handleCreateEvent = () => {
@@ -83,28 +94,8 @@ export default function EventPage() {
     });
   };
 
-  const handleEventSelect = (eventId: string) => {
-    setSelectedEventId(eventId);
-  };
-
   // Get event dates
-  const eventDates = React.useMemo(
-    () => getEventDates(events?.records || []),
-    [events],
-  );
-
-  // Convert event dates to Date objects for modifiers
-  const eventDatesArray = Array.from(eventDates).map(
-    (dateStr) => new Date(dateStr),
-  );
-
-  // if (isLoadingCalendars) {
-  //   return (
-  //     <div className="flex h-full items-center justify-center">
-  //       <Loading />
-  //     </div>
-  //   );
-  // }
+  const eventDates = React.useMemo(() => getEventDates(events || []), [events]);
 
   return (
     <div className="hidden h-screen flex-col md:flex">
@@ -172,7 +163,10 @@ export default function EventPage() {
                     size="sm"
                     variant="ghost"
                     disabled={isRefreshing}
-                    onClick={handleRefreshCalendars}
+                    onClick={() => {
+                      setIsRefreshing(true);
+                      refreshCalendars({ accountId: accountId });
+                    }}
                   >
                     {isRefreshing ? (
                       <Loading size="sm" className="h-4 w-4" />
@@ -242,115 +236,21 @@ export default function EventPage() {
 
           {/* Middle Panel - Event List */}
           <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-            <div className="flex h-full flex-col">
-              {/* Header */}
+            <Tabs>
               <div className="flex h-[52px] items-center px-4 py-2">
-                <h1 className="text-xl font-bold">Events</h1>
+                <h2 className="text-xl font-bold">Events</h2>
               </div>
               <Separator />
-
-              {/* Event List */}
-              <div className="flex-1 overflow-auto">
-                {isLoadingEvents ? (
-                  <div className="flex items-center justify-center p-8">
-                    <Loading size="sm" className="h-6 w-6" />
-                  </div>
-                ) : events && events.length > 0 ? (
-                  <div className="divide-y">
-                    {events.records.map((event, index) => (
-                      <div
-                        key={event.id || index}
-                        className={cn(
-                          "hover:bg-accent cursor-pointer p-4 transition-colors",
-                          selectedEventId === event.id && "bg-accent",
-                        )}
-                        onClick={() => handleEventSelect(event.id)}
-                      >
-                        <div className="space-y-1">
-                          <h3 className="text-sm font-medium">
-                            {event.subject || "Untitled Event"}
-                          </h3>
-                          <p className="text-muted-foreground text-xs">
-                            {event.start.dateTime
-                              ? new Date(
-                                  event.start.dateTime,
-                                ).toLocaleDateString()
-                              : event.start.dateOnly
-                                ? new Date(
-                                    event.start.dateOnly,
-                                  ).toLocaleDateString()
-                                : "No date"}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {event.start.dateTime && event.end.dateTime
-                              ? `${new Date(event.start.dateTime).toLocaleTimeString()} - ${new Date(event.end.dateTime).toLocaleTimeString()}`
-                              : event.start.dateOnly && event.end.dateOnly
-                                ? `${new Date(event.start.dateOnly).toLocaleDateString()} - ${new Date(event.end.dateOnly).toLocaleDateString()}`
-                                : "All day"}
-                          </p>
-                          {event.location && (
-                            <p className="text-muted-foreground truncate text-xs">
-                              📍 {event.location}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="text-center">
-                      <Calendar className="text-muted-foreground mx-auto h-12 w-12" />
-                      <h3 className="mt-4 text-lg font-semibold">
-                        No events found
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Create your first event to get started.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+              <SearchBar />
+              <EventList />
+            </Tabs>
           </ResizablePanel>
 
           <ResizableHandle withHandle />
 
           {/* Right Panel - Event Details */}
           <ResizablePanel defaultSize={defaultLayout[2]} minSize={30}>
-            <div className="flex h-full flex-col">
-              {/* Header */}
-              <div className="flex h-[52px] items-center px-4 py-2">
-                <h2 className="text-lg font-semibold">Event Details</h2>
-              </div>
-              <Separator />
-
-              {/* Event Details Content */}
-              <div className="flex-1 overflow-auto p-4">
-                {selectedEventId ? (
-                  <div className="space-y-4">
-                    {/* Selected event details will be displayed here */}
-                    <div className="text-muted-foreground text-center">
-                      <Calendar className="mx-auto mb-2 h-8 w-8" />
-                      {/* <p>Event details for ID: {selectedEventId}</p> */}
-                      <p className="text-sm">
-                        Detailed event view to be implemented
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <div className="text-muted-foreground text-center">
-                      <Calendar className="mx-auto mb-4 h-12 w-12" />
-                      <h3 className="mb-2 text-lg font-semibold">
-                        Select an event
-                      </h3>
-                      <p>Choose an event from the list to view its details</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <EventDisplay />
           </ResizablePanel>
         </ResizablePanelGroup>
       </TooltipProvider>
@@ -358,15 +258,22 @@ export default function EventPage() {
   );
 }
 
+type EventTypes = {
+  id: string;
+  subject: string;
+  startDate: Date;
+  endDate: Date;
+  createdTime: Date | null;
+  lastModifiedTime: Date | null;
+  meetingInfo: JsonValue;
+  organizer: JsonValue;
+};
+
 // Utility to extract event dates
-const getEventDates = (events: any[]) => {
+const getEventDates = (events: EventTypes[]) => {
   const eventDates = new Set<string>();
   events?.forEach((event) => {
-    const startDate = event.start.dateTime
-      ? new Date(event.start.dateTime)
-      : event.start.dateOnly
-        ? new Date(event.start.dateOnly)
-        : null;
+    const startDate = event.startDate;
     if (startDate) {
       // Format date to YYYY-MM-DD for comparison
       eventDates.add(format(startDate, "yyyy-MM-dd"));
