@@ -104,6 +104,10 @@ export function AppSidebar({
   )
     return null;
 
+  const filteredSidebarItems = sidebarItems.filter(
+    (item) => item.name !== "Group" || userRole !== "lecturer",
+  );
+
   return (
     <Sidebar
       collapsible="icon"
@@ -119,7 +123,7 @@ export function AppSidebar({
             <SidebarTrigger key="sidebar-trigger" className="pl-1" />
           </SidebarMenu>
           <SidebarMenu>
-            {sidebarItems.map((item) => {
+            {filteredSidebarItems.map((item) => {
               const isActive = item.href === `/${pageName}`;
               return isCollapsed ? (
                 <Tooltip key={item.href} delayDuration={0}>
