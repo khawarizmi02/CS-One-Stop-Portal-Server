@@ -66,33 +66,33 @@ export const adminRouter = createTRPCRouter({
       }
 
       // Fetch members' details
-      // const memberIds =
-      //   Array.isArray(appGroup.members) &&
-      //   appGroup.members.every((id) => typeof id === "string")
-      //     ? (appGroup.members as string[])
-      //     : [];
+      const memberIds =
+        Array.isArray(appGroup.members) &&
+        appGroup.members.every((id) => typeof id === "string")
+          ? (appGroup.members as string[])
+          : [];
 
-      // const memberDetails = await ctx.db.user.findMany({
-      //   where: {
-      //     id: {
-      //       in: memberIds,
-      //     },
-      //   },
-      //   select: {
-      //     id: true,
-      //     firstName: true,
-      //     lastName: true,
-      //     email: true,
-      //     createdAt: true,
-      //     updatedAt: true,
-      //   },
-      // });
+      const memberDetails = await ctx.db.user.findMany({
+        where: {
+          id: {
+            in: memberIds,
+          },
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
 
-      // appGroup.members = memberDetails.map((user) => ({
-      //   ...user,
-      //   createdAt: user.createdAt.toISOString(),
-      //   updatedAt: user.updatedAt.toISOString(),
-      // }));
+      appGroup.members = memberDetails.map((user) => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      }));
 
       return appGroup;
     }),

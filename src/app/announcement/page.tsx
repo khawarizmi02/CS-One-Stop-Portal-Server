@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DefaultImage } from "@/constant";
 import { JsonValue } from "@prisma/client/runtime/library";
 import { type Announcement } from "@prisma/client";
-import { Search, X, Check } from "lucide-react";
+import { Search, X, Check, Users } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { AvatarFallback } from "@/components/ui/avatar";
@@ -203,22 +203,32 @@ const CreateAnnouncementForm = () => {
       refetchOnWindowFocus: false,
     });
 
+  const { data: availableGroups, isLoading: loadingGroups } =
+    api.admin.getAppGroups.useQuery(undefined, {
+      refetchOnWindowFocus: false,
+    });
+
   const formSchema = z.object({
     title: z.string().nonempty("Title is required"),
     content: z.array(z.any()).nonempty("Content is required"),
-    targetUsers: z.array(z.string()).min(1, "Please select at least one user"),
+    targetUsers: z
+      .array(z.string())
+      .min(1, "Please select at least one user or group"),
+    targetGroups: z.array(z.string()).optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      content: [{ text: "" }],
+      content: [{ type: "paragraph", children: [{ text: "" }] }],
       targetUsers: [],
+      targetGroups: [],
     },
   });
 
   const selectedUsers = form.watch("targetUsers");
+  const selectedGroups = form.watch("targetGroups") ?? [];
 
   const toggleSelectUser = (userId: string) => {
     const currentUsers = form.getValues("targetUsers");
@@ -235,15 +245,60 @@ const CreateAnnouncementForm = () => {
     }
   };
 
+  const toggleSelectGroup = (groupId: string) => {
+    const currentGroups = form.getValues("targetGroups") ?? [];
+    if (currentGroups.includes(groupId)) {
+      form.setValue(
+        "targetGroups",
+        currentGroups.filter((id) => id !== groupId),
+        { shouldValidate: true },
+      );
+    } else {
+      form.setValue("targetGroups", [...currentGroups, groupId], {
+        shouldValidate: true,
+      });
+    }
+  };
+
   const filteredUsers = availableUsers?.filter((user) =>
     user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const filteredGroups = availableGroups?.filter((group) =>
+    group.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
+      // Collect user IDs from selected groups
+      const groupMemberIds = (availableGroups || [])
+        .filter((group) => values.targetGroups?.includes(group.id))
+        .flatMap((group) =>
+          Array.isArray(group.members)
+            ? group.members
+                .filter((member) => typeof member === "string")
+                .map((member) => member as string)
+            : [],
+        );
+
+      // Merge individual user IDs with group member IDs, removing duplicates
+      const allTargetUsers = Array.from(
+        new Set([...values.targetUsers, ...groupMemberIds]),
+      );
+
+      if (allTargetUsers.length === 0) {
+        toast({
+          title: "No users selected",
+          description: "Please select at least one user or group.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       mutate({
-        ...values,
-        targetUser: values.targetUsers,
+        title: values.title,
+        content: values.content,
+        targetUser: allTargetUsers,
       });
     } catch (error) {
       toast({
@@ -259,7 +314,8 @@ const CreateAnnouncementForm = () => {
       <DialogHeader>
         <DialogTitle>Create Announcement</DialogTitle>
         <DialogDescription>
-          Fill in the details and select target users for your new announcement.
+          Fill in the details and select target users or groups for your new
+          announcement.
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -293,23 +349,24 @@ const CreateAnnouncementForm = () => {
           <FormField
             control={form.control}
             name="targetUsers"
-            render={({ field }) => (
+            render={() => (
               <FormItem className="flex flex-col">
-                <FormLabel>Target Users</FormLabel>
+                <FormLabel>Target Users and Groups</FormLabel>
                 <FormDescription>
-                  Select the users who will receive this announcement.
+                  Select the users and groups who will receive this
+                  announcement.
                 </FormDescription>
                 <div className="flex flex-col gap-4">
                   <div className="relative">
                     <Search className="absolute top-2.5 left-2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search for users..."
+                      placeholder="Search for users or groups..."
                       className="pl-8"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  {selectedUsers.length > 0 && (
+                  {(selectedUsers.length > 0 || selectedGroups.length > 0) && (
                     <div className="flex flex-wrap gap-2">
                       {selectedUsers.map((id) => {
                         const user = availableUsers?.find(
@@ -317,7 +374,7 @@ const CreateAnnouncementForm = () => {
                         );
                         return (
                           <Badge
-                            key={id}
+                            key={`user-${id}`}
                             variant="secondary"
                             className="flex items-center gap-1"
                           >
@@ -329,18 +386,68 @@ const CreateAnnouncementForm = () => {
                           </Badge>
                         );
                       })}
+                      {selectedGroups.map((id) => {
+                        const group = availableGroups?.find(
+                          (group) => group.id === id,
+                        );
+                        return (
+                          <Badge
+                            key={`group-${id}`}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            <Users className="mr-1 h-3 w-3" />
+                            {group?.name || "Group"}
+                            <X
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => toggleSelectGroup(id)}
+                            />
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
                   <ScrollArea className="h-64 rounded-md border">
-                    {loadingUsers ? (
+                    {loadingUsers || loadingGroups ? (
                       <div className="flex h-full items-center justify-center p-4">
-                        <p className="text-gray-500">Loading users...</p>
+                        <p className="text-gray-500">Loading...</p>
                       </div>
-                    ) : filteredUsers && filteredUsers.length > 0 ? (
+                    ) : filteredUsers?.length || filteredGroups?.length ? (
                       <div className="flex flex-col">
-                        {filteredUsers.map((user) => (
+                        {filteredGroups?.map((group) => (
                           <div
-                            key={user.id}
+                            key={`group-${group.id}`}
+                            className={`flex cursor-pointer items-center justify-between border-b p-3 hover:bg-gray-50 ${
+                              selectedGroups.includes(group.id)
+                                ? "bg-gray-50"
+                                : ""
+                            }`}
+                            onClick={() => toggleSelectGroup(group.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+                                <Users className="h-4 w-4 text-gray-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{group.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {Array.isArray(group.members)
+                                    ? group.members.length
+                                    : 0}{" "}
+                                  members
+                                </p>
+                              </div>
+                            </div>
+                            {selectedGroups.includes(group.id) && (
+                              <div className="bg-primary rounded-full p-1">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {filteredUsers?.map((user) => (
+                          <div
+                            key={`user-${user.id}`}
                             className={`flex cursor-pointer items-center justify-between border-b p-3 hover:bg-gray-50 ${
                               selectedUsers.includes(user.id)
                                 ? "bg-gray-50"
@@ -378,7 +485,9 @@ const CreateAnnouncementForm = () => {
                       </div>
                     ) : (
                       <div className="flex h-full items-center justify-center p-4">
-                        <p className="text-gray-500">No users found</p>
+                        <p className="text-gray-500">
+                          No users or groups found
+                        </p>
                       </div>
                     )}
                   </ScrollArea>
@@ -395,7 +504,10 @@ const CreateAnnouncementForm = () => {
             </DialogClose>
             <Button
               type="submit"
-              disabled={isPending || selectedUsers.length === 0}
+              disabled={
+                isPending ||
+                (selectedUsers.length === 0 && selectedGroups.length === 0)
+              }
             >
               {isPending ? "Submitting..." : "Submit"}
             </Button>

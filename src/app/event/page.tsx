@@ -35,6 +35,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import AuthButton from "@/components/AuthButton";
 
 export default function EventPage() {
   const { toast } = useToast();
@@ -220,7 +221,8 @@ export default function EventPage() {
               >
                 <div className={cn("p-4", isCollapsed && "p-2")}>
                   <DialogTrigger asChild>
-                    <Button
+                    <AuthButton
+                      roles={["lecturer"]}
                       className={cn("w-full", isCollapsed && "h-8 w-8 p-0")}
                       size={isCollapsed ? "sm" : "default"}
                     >
@@ -232,7 +234,7 @@ export default function EventPage() {
                           Create Event
                         </>
                       )}
-                    </Button>
+                    </AuthButton>
                   </DialogTrigger>
                 </div>
                 <CreateEventDialog
