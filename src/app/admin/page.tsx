@@ -34,6 +34,8 @@ export default function AdminDashboard() {
     api.admin.getForumStats.useQuery();
   const { data: groupStats, isLoading: groupStatsLoading } =
     api.admin.getGroupStats.useQuery();
+  const { data: userGroups, isLoading: userGroupsLoading } =
+    api.admin.getAppGroups.useQuery();
 
   const [userId, setUserId] = useLocalStorage("userId", data?.id || "");
   React.useEffect(() => {
@@ -200,6 +202,17 @@ export default function AdminDashboard() {
         </StatCard>
 
         <StatCard
+          title="AppGroups"
+          icon={<Users2 className="h-6 w-6 text-orange-500" />}
+          isLoading={userGroupsLoading}
+          variants={cardVariants}
+        >
+          <p className="text-lg font-semibold text-gray-700">
+            Total: {userGroups?.length ?? 0}
+          </p>
+        </StatCard>
+
+        <StatCard
           title="Groups"
           icon={<Users2 className="h-6 w-6 text-orange-500" />}
           isLoading={groupStatsLoading}
@@ -228,9 +241,36 @@ export default function AdminDashboard() {
         />
       </Section>
 
+      {/* AppGroups Section */}
+      <Section
+        title="All User Groups"
+        icon={<Users2 className="h-6 w-6 text-orange-500" />}
+      >
+        {userGroups?.map((group) => (
+          <motion.div
+            key={group.id}
+            className="mb-4 rounded-lg border bg-white p-4 shadow-sm hover:shadow-md"
+            variants={cardVariants}
+            whileHover="hover"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <strong className="text-gray-800">{group.name}</strong>
+                <div className="mt-1 text-sm text-gray-600">
+                  {group.description}
+                </div>
+              </div>
+              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
+                {Array.isArray(group.members) ? group.members.length : 0} Members
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </Section>
+
       {/* Groups Section */}
       <Section
-        title="All Groups"
+        title="All Student Groups"
         icon={<Users2 className="h-6 w-6 text-orange-500" />}
       >
         {groupStats?.group.map((group) => (

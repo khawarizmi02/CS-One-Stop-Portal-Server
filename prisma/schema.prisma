@@ -37,6 +37,19 @@ model User {
   CommentVotes         CommentVote[]
   ForumVotes           ForumVote[]
   chatbotInteraction   ChatbotInteraction?
+  appGroup             AppGroup[]
+}
+
+// an app group that is created by admins. a group will consist of both students and lecturers
+model AppGroup {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  members     Json     @default("[]") @db.JsonB() // list of user IDs
+  description String?
+  imageUrl    String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
 }
 
 enum role {
@@ -61,6 +74,7 @@ model Announcement {
 
 model Event {
   id               String    @id @default(cuid())
+  Etag             String?
   subject          String // maps to "subject"
   description      String?
   location         String?
@@ -93,22 +107,22 @@ model Event {
   accountId String
 
   RSVPs       RSVP[]
-	attendees   EventAttendee[]
+  attendees   EventAttendee[]
   attachments EventAttachment[]
 }
 
 model EventAttendee {
-  id        String   @id @default(cuid())
-  email     String
-  name      String?
-  type      String?  // Add this
-  response  String?
-  comment   String?
+  id                  String   @id @default(cuid())
+  email               String
+  name                String?
+  type                String? // Add this
+  response            String?
+  comment             String?
   attendeePermissions Json? // Add this
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id])
+  event   Event  @relation(fields: [eventId], references: [id])
   eventId String
 
   @@unique([eventId])
@@ -209,6 +223,7 @@ model Forum {
   votes    ForumVote[]
 }
 
+// this model is ony used for the student to make a group discussion and collaboration
 model Group {
   id          String   @id @default(cuid())
   name        String

@@ -407,6 +407,7 @@ async function upsertCalendarEvent(
       where: { id: event.id },
       update: {
         calendarId: event.calendarId,
+        Etag: event.etag,
         createdTime: event.createdTime
           ? new Date(event.createdTime)
           : undefined,
@@ -447,6 +448,7 @@ async function upsertCalendarEvent(
       create: {
         id: event.id,
         calendarId: event.calendarId,
+        Etag: event.etag,
         createdTime: event.createdTime
           ? new Date(event.createdTime)
           : undefined,

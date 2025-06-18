@@ -5,6 +5,7 @@ import type {
   SyncResponse,
   SyncUpdatedCalendarResponse,
   SyncUpdatedResponse,
+  CreateEvent,
 } from "@/lib/types";
 import { db } from "@/server/db";
 import axios from "axios";
@@ -327,7 +328,7 @@ class Account {
   async performInitialSync() {
     try {
       // Start the sync process
-      const daysWithin = 3;
+      const daysWithin = 14;
       let syncResponse = await this.startSync(daysWithin);
 
       // Wait until the sync is ready
@@ -443,59 +444,103 @@ class Account {
     }
   }
 
-  async createCalendarEvent() {}
+  async createCalendarEvent(calendarId: string, eventData: CreateEvent) {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/calendars/${calendarId}/events`,
+        {
+          ...eventData,
+        },
+        {
+          params: {
+            notifyAttendees: true,
+            returnRecord: true,
+          },
+          headers: { Authorization: `Bearer ${this.token}` },
+        },
+      );
 
-  async getWebhooks() {
-    type Response = {
-      records: {
-        id: number;
-        resource: string;
-        notificationUrl: string;
-        active: boolean;
-        failSince: string;
-        failDescription: string;
-      }[];
-      totalSize: number;
-      offset: number;
-      done: boolean;
-    };
-    const res = await axios.get<Response>(`${API_BASE_URL}/subscriptions`, {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return res.data;
+      console.log("Calendar event created:", response.data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error creating calendar event:",
+          JSON.stringify(error.response?.data, null, 2),
+        );
+      } else {
+        console.error("Error creating calendar event:", error);
+      }
+      throw error;
+    }
   }
 
-  async createWebhook(resource: string, notificationUrl: string) {
-    const res = await axios.post(
-      `${API_BASE_URL}/subscriptions`,
-      {
-        resource,
-        notificationUrl,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "application/json",
+  async updateCalendarEvent(
+    calendarId: string,
+    eventId: string,
+    eventData: CreateEvent,
+    ifMatch: string,
+  ) {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}/calendars/${calendarId}/events/${eventId}`,
+        {
+          ...eventData,
         },
-      },
-    );
-    return res.data;
+        {
+          params: {
+            notifyAttendees: true,
+            returnRecord: true,
+          },
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            "If-Match": ifMatch,
+          },
+        },
+      );
+
+      console.log("Calendar event updated:", response.data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error updating calendar event:",
+          JSON.stringify(error.response?.data, null, 2),
+        );
+      } else {
+        console.error("Error updating calendar event:", error);
+      }
+      throw error;
+    }
   }
 
-  async deleteWebhook(subscriptionId: string) {
-    const res = await axios.delete(
-      `${API_BASE_URL}/subscriptions/${subscriptionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "application/json",
+  async deleteCalendarEvent(calendarId: string, eventId: string) {
+    try {
+      const response = await axios.delete(
+        `${API_BASE_URL}/calendars/${calendarId}/events/${eventId}`,
+        {
+          params: {
+            notifyAttendees: true,
+          },
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+          },
         },
-      },
-    );
-    return res.data;
+      );
+
+      console.log("Calendar event deleted:", response);
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error deleting calendar event:",
+          JSON.stringify(error.response?.data, null, 2),
+        );
+      } else {
+        console.error("Error deleting calendar event:", error);
+      }
+      throw error;
+    }
   }
 }
 type EmailAddress = {

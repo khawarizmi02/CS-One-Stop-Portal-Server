@@ -129,11 +129,12 @@ export async function POST(req: Request) {
       - If the context does not contain enough information to answer a question, politely say you don't have enough information.
       - Avoid apologizing for previous responses. Instead, indicate that you have updated your knowledge based on new information.
       - Do not invent or speculate about anything that is not directly supported by the email context.
-      - Keep your responses concise and relevant to the user's questions or the email being composed.`,
+      - Keep your responses concise and relevant to the user's questions or the email being composed.
+			- ***Do NOT use any Markdown or special formatting like asterisks (*), underscores (_), or backticks (\`). Output plain text only.***`,
     };
 
     const response = await openai.createChatCompletion({
-      model: "gpt-4o-mini",
+      model: "o4-mini",
       messages: [
         prompt,
         ...messages.filter((message: Message) => message.role === "user"),

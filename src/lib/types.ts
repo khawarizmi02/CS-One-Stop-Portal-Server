@@ -225,3 +225,35 @@ interface EventOccurrenceInfo {
   };
   masterId?: string;
 }
+
+export interface CreateEvent {
+  subject: string;
+  description?: string;
+  location?: string;
+  start: {
+    dateOnly?: string; // <date>
+    dateTime: string;
+    timezone: string;
+  };
+  end: {
+    dateOnly?: string; // <date>
+    dateTime: string;
+    timezone: string;
+  };
+  meetingInfo?: {
+    attendees?: Array<{
+      id: string;
+      emailAddress: {
+        name?: string;
+        address: string;
+      };
+      type: "required" | "optional" | "resource";
+    }>;
+    response?: "noResponse" | "declined" | "tentative" | "accepted";
+  };
+
+  occurrenceInfo?: EventOccurrenceInfo;
+
+  showAs?: "free" | "busy" | "tentative" | "outOfOffice" | "unknown";
+  sensitivity?: "normal" | "private" | "personal" | "confidential";
+}

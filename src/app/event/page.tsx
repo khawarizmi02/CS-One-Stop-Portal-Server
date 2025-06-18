@@ -10,7 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
 import SearchBar from "@/components/SearchBar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,17 @@ import { EventDisplay } from "@/components/EventDisplay";
 import useEvents from "@/hooks/use-events";
 import type { JsonValue } from "@prisma/client/runtime/library";
 import { useLocalStorage } from "usehooks-ts";
+import { CreateEventDialog } from "@/components/CreateEventDialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function EventPage() {
   const { toast } = useToast();
@@ -33,13 +44,18 @@ export default function EventPage() {
   const defaultCollapsed = false;
   const navCollapsedSize = 4;
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
-  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(
-    null,
-  );
+
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     new Date(),
   );
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [createEventDialogOpen, setCreateEventDialogOpen] =
+    React.useState(false);
+
+  // You'll need to get the calendarId from somewhere - this is just an example
+  // You might want to store it in localStorage or get it from your events hook
+  const [selectedCalendarId, setSelectedCalendarId] =
+    React.useState<string>("");
 
   const { mutate: refreshCalendars } = api.calendar.syncEvents.useMutation({
     onSuccess: () => {
@@ -87,11 +103,30 @@ export default function EventPage() {
   };
 
   const handleCreateEvent = () => {
-    // TODO: Implement create event modal/dialog
-    toast({
-      title: "Create Event",
-      description: "Create event functionality to be implemented",
-    });
+    // Check if we have required data
+    if (!accountId) {
+      toast({
+        title: "Error",
+        description: "No account selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For now, we'll need a default calendarId. You might want to:
+    // 1. Let user select a calendar in the dialog
+    // 2. Use a default calendar
+    // 3. Get available calendars from an API call
+    if (!selectedCalendarId) {
+      toast({
+        title: "Error",
+        description: "No calendar selected. Please select a calendar first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCreateEventDialogOpen(true);
   };
 
   // Get event dates
@@ -178,23 +213,33 @@ export default function EventPage() {
               </div>
               <Separator />
 
-              {/* Create Event Button */}
-              <div className={cn("p-4", isCollapsed && "p-2")}>
-                <Button
-                  onClick={handleCreateEvent}
-                  className={cn("w-full", isCollapsed && "h-8 w-8 p-0")}
-                  size={isCollapsed ? "sm" : "default"}
-                >
-                  {isCollapsed ? (
-                    <Plus className="h-4 w-4" />
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Event
-                    </>
-                  )}
-                </Button>
-              </div>
+              {/* Create Event Button within Dialog */}
+              <Dialog
+                open={createEventDialogOpen}
+                onOpenChange={setCreateEventDialogOpen}
+              >
+                <div className={cn("p-4", isCollapsed && "p-2")}>
+                  <DialogTrigger asChild>
+                    <Button
+                      className={cn("w-full", isCollapsed && "h-8 w-8 p-0")}
+                      size={isCollapsed ? "sm" : "default"}
+                    >
+                      {isCollapsed ? (
+                        <Plus className="h-4 w-4" />
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Event
+                        </>
+                      )}
+                    </Button>
+                  </DialogTrigger>
+                </div>
+                <CreateEventDialog
+                  calendarId={selectedCalendarId}
+                  accountId={accountId}
+                />
+              </Dialog>
 
               {/* Calendar List */}
               <div className={cn("px-2", isCollapsed && "px-1")}>
