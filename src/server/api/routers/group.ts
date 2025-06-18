@@ -570,4 +570,68 @@ export const groupRouter = createTRPCRouter({
 
       return taskCount;
     }),
+
+  removeGroupMember: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+        memberId: z.string().nonempty(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // the member of the group
+      const groupMember = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: input.memberId,
+        },
+      });
+
+      if (!groupMember) throw new Error("Group member not found");
+
+      const deleteMember = await ctx.db.groupMember.delete({
+        where: { id: groupMember.id },
+      });
+
+      return deleteMember;
+    }),
+
+  UpdateGroupMemberRole: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string().nonempty(),
+        memberId: z.string().nonempty(),
+        role: z.string().nonempty(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+
+      if (!userId) throw new Error("Not authenticated");
+
+      // the member of the group
+      const groupMember = await ctx.db.groupMember.findFirst({
+        where: {
+          groupId: input.groupId,
+          userId: input.memberId,
+        },
+      });
+
+      if (!groupMember) throw new Error("Group member not found");
+
+      const updateRole = await ctx.db.groupMember.update({
+        where: {
+          id: groupMember.id,
+        },
+        data: {
+          role: input.role,
+        },
+      });
+
+      return updateRole;
+    }),
 });

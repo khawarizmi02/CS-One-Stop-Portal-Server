@@ -7,16 +7,18 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 
 interface Member {
   id: string;
@@ -28,6 +30,10 @@ interface Member {
 const GroupMembersPage = () => {
   const params = useParams();
   const groupId = params.groupId as string;
+
+  const { data: UserRole } = api.group.getUserGroupRole.useQuery({
+    groupId: Array.isArray(groupId) ? groupId[0] : groupId || "",
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -48,8 +54,10 @@ const GroupMembersPage = () => {
   } = api.group.getGroupMembers.useQuery({ groupId });
 
   // Fetch all users for adding members
+  // const { data: allUsers, isLoading: usersLoading } =
+  //   api.user.getAll.useQuery();
   const { data: allUsers, isLoading: usersLoading } =
-    api.user.getAll.useQuery();
+    api.user.getStudent.useQuery();
 
   // Mutation for adding members
   const { mutate: addMembersMutation, isPending } =
@@ -110,7 +118,7 @@ const GroupMembersPage = () => {
 
             <div className="flex flex-col gap-4 py-4">
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Search className="absolute top-2.5 left-2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search for users..."
                   className="pl-8"
@@ -159,12 +167,12 @@ const GroupMembersPage = () => {
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.imageUrl || ""} />
                             <AvatarFallback>
-                              {user.firstName?.[0] || "U"}
+                              {user.firstName?.[0] || "U"} {user.lastName || ""}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium">
-                              {user.firstName || "User"}
+                              {user.firstName || "User"} {user.lastName || ""}
                             </p>
                           </div>
                         </div>
@@ -212,16 +220,28 @@ const GroupMembersPage = () => {
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={member.imageUrl || ""} />
                   <AvatarFallback className="text-lg">
-                    {member.firstName?.[0] || "U"}
+                    {member.firstName?.[0] || "U"} {member.lastName || ""}
                   </AvatarFallback>
                 </Avatar>
                 <h4 className="mt-2 text-lg font-medium">
-                  {member.firstName || "User"}
+                  {member.firstName || "User"} {member.lastName || ""}
                 </h4>
                 {member.role && (
                   <Badge variant="outline" className="mt-1">
                     {member.role}
                   </Badge>
+                )}
+                {UserRole === "ADMIN" && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button>...</button>
+                    </DialogTrigger>
+                    <UpdateGroupMember
+                      member={member}
+                      userRole={UserRole}
+                      groupId={groupId}
+                    />
+                  </Dialog>
                 )}
               </div>
             ))}
@@ -237,5 +257,88 @@ const GroupMembersPage = () => {
     </div>
   );
 };
+
+type member = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string | null;
+  role: string;
+};
+
+function UpdateGroupMember({
+  member,
+  userRole,
+  groupId,
+}: {
+  member: member;
+  userRole: string;
+  groupId: string;
+}) {
+  const { mutate: DeleteGroupMember, isPending: isPendingDelete } =
+    api.group.removeGroupMember.useMutation();
+
+  const { mutate: UpdateGroupRole, isPending: isPendingUpdate } =
+    api.group.UpdateGroupMemberRole.useMutation();
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Manage Member</DialogTitle>
+      </DialogHeader>
+      <div className="flex flex-col gap-4 py-4">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={member.imageUrl || ""} />
+            <AvatarFallback>
+              {member.firstName?.[0] || "U"} {member.lastName || ""}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">
+              {member.firstName || "User"} {member.lastName || ""}
+            </p>
+            {member.role && (
+              <p className="text-sm text-gray-500">{member.role}</p>
+            )}
+          </div>
+        </div>
+
+        <Button
+          variant="destructive"
+          onClick={() => {
+            DeleteGroupMember({ groupId: groupId, memberId: member.id });
+          }}
+          disabled={isPendingDelete || isPendingUpdate}
+        >
+          {isPendingDelete ? "Removing..." : "Remove Member"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            let role = member.role === "ADMIN" ? "MEMBER" : "ADMIN";
+          }}
+          disabled={isPendingUpdate || isPendingDelete}
+        >
+          {isPendingUpdate
+            ? "Updating..."
+            : member.role === "ADMIN"
+              ? "Remove Admin Role"
+              : "Make Admin"}
+        </Button>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button
+            variant="outline"
+            disabled={isPendingDelete || isPendingUpdate}
+          >
+            Cancel
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
 
 export default GroupMembersPage;
