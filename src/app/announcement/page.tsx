@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -36,6 +36,10 @@ import { useToast } from "@/hooks/use-toast";
 import { DefaultImage } from "@/constant";
 import { JsonValue } from "@prisma/client/runtime/library";
 import { type Announcement } from "@prisma/client";
+import { Search, X, Check } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { AvatarFallback } from "@/components/ui/avatar";
 
 const Announcement = () => {
   const router = useRouter();
@@ -106,7 +110,6 @@ const Announcement = () => {
 export default Announcement;
 
 const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
-  // Assuming announcement has a createdAt field for the timestamp
   const formattedDate = announcement.createdAt
     ? new Date(announcement.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
@@ -177,9 +180,15 @@ interface AnnouncementCardProps {
 
 const CreateAnnouncementForm = () => {
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
   const { mutate, isPending } = api.announcement.create.useMutation({
     onError: (error) => {
       console.log("Error creating announcement", error);
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Please contact the admin",
+        variant: "destructive",
+      });
     },
     onSuccess: () => {
       toast({
@@ -189,9 +198,15 @@ const CreateAnnouncementForm = () => {
     },
   });
 
+  const { data: availableUsers, isLoading: loadingUsers } =
+    api.user.getAll.useQuery(undefined, {
+      refetchOnWindowFocus: false,
+    });
+
   const formSchema = z.object({
-    title: z.string().nonempty(),
-    content: z.array(z.any()).nonempty(),
+    title: z.string().nonempty("Title is required"),
+    content: z.array(z.any()).nonempty("Content is required"),
+    targetUsers: z.array(z.string()).min(1, "Please select at least one user"),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -199,16 +214,41 @@ const CreateAnnouncementForm = () => {
     defaultValues: {
       title: "",
       content: [{ text: "" }],
+      targetUsers: [],
     },
   });
 
+  const selectedUsers = form.watch("targetUsers");
+
+  const toggleSelectUser = (userId: string) => {
+    const currentUsers = form.getValues("targetUsers");
+    if (currentUsers.includes(userId)) {
+      form.setValue(
+        "targetUsers",
+        currentUsers.filter((id) => id !== userId),
+        { shouldValidate: true },
+      );
+    } else {
+      form.setValue("targetUsers", [...currentUsers, userId], {
+        shouldValidate: true,
+      });
+    }
+  };
+
+  const filteredUsers = availableUsers?.filter((user) =>
+    user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     try {
-      mutate(values);
+      mutate({
+        ...values,
+        targetUser: values.targetUsers,
+      });
     } catch (error) {
       toast({
-        title: "Uh oh! Something wrong out there.",
-        description: "Please contact with the admin",
+        title: "Uh oh! Something went wrong.",
+        description: "Please contact the admin",
         variant: "destructive",
       });
     }
@@ -219,11 +259,11 @@ const CreateAnnouncementForm = () => {
       <DialogHeader>
         <DialogTitle>Create Announcement</DialogTitle>
         <DialogDescription>
-          Fill in the details to create a new announcement.
+          Fill in the details and select target users for your new announcement.
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="title"
@@ -250,17 +290,115 @@ const CreateAnnouncementForm = () => {
               </FormItem>
             )}
           />
-          <DialogFooter>
-            {isPending ? (
-              <Button>Submiting...</Button>
-            ) : (
-              <Button type="submit">Submit</Button>
+          <FormField
+            control={form.control}
+            name="targetUsers"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Target Users</FormLabel>
+                <FormDescription>
+                  Select the users who will receive this announcement.
+                </FormDescription>
+                <div className="flex flex-col gap-4">
+                  <div className="relative">
+                    <Search className="absolute top-2.5 left-2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search for users..."
+                      className="pl-8"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  {selectedUsers.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedUsers.map((id) => {
+                        const user = availableUsers?.find(
+                          (user) => user.id === id,
+                        );
+                        return (
+                          <Badge
+                            key={id}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {user?.firstName || "User"} {user?.lastName || ""}
+                            <X
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => toggleSelectUser(id)}
+                            />
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <ScrollArea className="h-64 rounded-md border">
+                    {loadingUsers ? (
+                      <div className="flex h-full items-center justify-center p-4">
+                        <p className="text-gray-500">Loading users...</p>
+                      </div>
+                    ) : filteredUsers && filteredUsers.length > 0 ? (
+                      <div className="flex flex-col">
+                        {filteredUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className={`flex cursor-pointer items-center justify-between border-b p-3 hover:bg-gray-50 ${
+                              selectedUsers.includes(user.id)
+                                ? "bg-gray-50"
+                                : ""
+                            }`}
+                            onClick={() => toggleSelectUser(user.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.imageUrl || ""} />
+                                <AvatarFallback>
+                                  {user.firstName?.[0] || "U"}{" "}
+                                  {user.lastName || ""}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">
+                                  {user.firstName || "User"}{" "}
+                                  {user.lastName || ""}
+                                </p>
+                                {user.role && (
+                                  <p className="text-xs text-gray-500">
+                                    {user.role}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {selectedUsers.includes(user.id) && (
+                              <div className="bg-primary rounded-full p-1">
+                                <Check className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-4">
+                        <p className="text-gray-500">No users found</p>
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+                <FormMessage />
+              </FormItem>
             )}
+          />
+          <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="secondary">
                 Cancel
               </Button>
             </DialogClose>
+            <Button
+              type="submit"
+              disabled={isPending || selectedUsers.length === 0}
+            >
+              {isPending ? "Submitting..." : "Submit"}
+            </Button>
           </DialogFooter>
         </form>
       </Form>

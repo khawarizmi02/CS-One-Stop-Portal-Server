@@ -119,7 +119,13 @@ export const userRouter = createTRPCRouter({
     }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
+    // find all users exclude admin
     const users = await ctx.db.user.findMany({
+      where: {
+        role: {
+          not: "admin",
+        },
+      },
       take: 50,
     });
 

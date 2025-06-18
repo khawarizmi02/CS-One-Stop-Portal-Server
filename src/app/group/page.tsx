@@ -138,7 +138,7 @@ const GroupList = ({ groups, isLoading }: GroupListProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search groups..."
               className="pl-10"
@@ -165,10 +165,10 @@ const GroupList = ({ groups, isLoading }: GroupListProps) => {
           <Card
             key={group.id}
             onClick={() => router.push(`/group/${group.id}/chat`)}
-            className="overflow-hidden transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-primary/20"
+            className="hover:ring-primary/20 overflow-hidden transition-all duration-200 hover:shadow-md hover:ring-2"
           >
-            <div className="flex h-24 items-center justify-center bg-linear-to-r from-primary/10 to-secondary/10">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold text-primary shadow-sm">
+            <div className="from-primary/10 to-secondary/10 flex h-24 items-center justify-center bg-linear-to-r">
+              <div className="text-primary flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-semibold shadow-sm">
                 {group.name.substring(0, 2).toUpperCase()}
               </div>
             </div>
@@ -301,7 +301,7 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
   const selectedMembers = form.watch("members");
 
   // Filter users based on search term
-  const filteredUsers = availableUsers?.filter((user) =>
+  const filteredUsers = student?.filter((user) =>
     user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -384,7 +384,7 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
                 <div className="flex flex-col gap-4">
                   {/* Search input */}
                   <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                    <Search className="absolute top-2.5 left-2 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search for users..."
                       className="pl-8"
@@ -397,9 +397,7 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
                   {selectedMembers.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedMembers.map((id) => {
-                        const user = availableUsers?.find(
-                          (user) => user.id === id,
-                        );
+                        const user = student?.find((user) => user.id === id);
                         return (
                           <Badge
                             key={id}
@@ -451,7 +449,7 @@ const CreateGroupDialog = ({ mutate, isPending }: CreateGroupDialogProps) => {
                             </div>
 
                             {selectedMembers.includes(user.id) && (
-                              <div className="rounded-full bg-primary p-1">
+                              <div className="bg-primary rounded-full p-1">
                                 <Check className="h-3 w-3 text-white" />
                               </div>
                             )}
