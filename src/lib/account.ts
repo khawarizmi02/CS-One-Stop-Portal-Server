@@ -80,9 +80,16 @@ class Account {
         params,
       });
 
-      const calendarId = response.data.records.find(
+      console.log("caledars:", response.data.records);
+
+      let calendarId = response.data.records.find(
         (calendar) => calendar.name === "Calendar",
       )?.id;
+
+      if (response.data.records.length > 0 && response.data.records[0]) {
+        calendarId = response.data.records[0].id;
+      }
+
       if (!calendarId) {
         throw new Error("Primary calendar not found");
       }
