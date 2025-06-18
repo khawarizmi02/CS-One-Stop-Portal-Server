@@ -31,6 +31,14 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: "FAILED_TO_SYNC" }, { status: 500 });
 
   const { deltaToken, emails } = response;
+  await db.account.update({
+    where: {
+      token: dbAccount.token,
+    },
+    data: {
+      nextDeltaToken: deltaToken,
+    },
+  });
 
   const calendarResponse = await account.performInitialSyncCalendar();
   if (!calendarResponse)

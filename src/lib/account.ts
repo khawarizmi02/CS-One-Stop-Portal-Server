@@ -23,7 +23,7 @@ const TIMEMIN = new Date(
 ).toISOString();
 const TIMEMAX = new Date(
   new Date().getFullYear(),
-  new Date().getMonth() + 3,
+  new Date().getMonth() + 2,
   0, // Last day of the month before the 3rd month ahead
 ).toISOString();
 
@@ -335,7 +335,7 @@ class Account {
   async performInitialSync() {
     try {
       // Start the sync process
-      const daysWithin = 4;
+      const daysWithin = 2;
       let syncResponse = await this.startSync(daysWithin);
 
       // Wait until the sync is ready
