@@ -48,7 +48,10 @@ export const GET = async (req: NextRequest) => {
       name: accountDetails.name,
     },
     update: {
+      id: token.accountId.toString(),
       token: token.accessToken,
+      name: accountDetails.name,
+      emailAddress: accountDetails.email,
     },
   });
   waitUntil(
