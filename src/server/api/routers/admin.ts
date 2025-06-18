@@ -8,7 +8,7 @@ export const adminRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1),
-        description: z.string().min(1),
+        description: z.string().optional(),
         members: z.array(z.string()).min(1),
       }),
     )
@@ -23,7 +23,7 @@ export const adminRouter = createTRPCRouter({
         throw new Error("Not authenticated");
       }
 
-      const { name, description, members } = input;
+      const { name, description = "", members } = input;
 
       const appGroup = await ctx.db.appGroup.create({
         data: {
@@ -33,6 +33,66 @@ export const adminRouter = createTRPCRouter({
           members,
         },
       });
+
+      return appGroup;
+    }),
+
+  getAppGroupById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.auth?.userId;
+      if (!userId) {
+        console.error(
+          "Authentication error: ctx.auth is undefined or userId is missing",
+          ctx.auth,
+        );
+        throw new Error("Not authenticated");
+      }
+      const { id } = input;
+
+      const appGroup = await ctx.db.appGroup.findUnique({
+        where: { id: input.id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          members: true,
+        },
+      });
+
+      if (!appGroup) {
+        throw new Error(`App group with id ${id} not found`);
+      }
+
+      // Fetch members' details
+      // const memberIds =
+      //   Array.isArray(appGroup.members) &&
+      //   appGroup.members.every((id) => typeof id === "string")
+      //     ? (appGroup.members as string[])
+      //     : [];
+
+      // const memberDetails = await ctx.db.user.findMany({
+      //   where: {
+      //     id: {
+      //       in: memberIds,
+      //     },
+      //   },
+      //   select: {
+      //     id: true,
+      //     firstName: true,
+      //     lastName: true,
+      //     email: true,
+      //     createdAt: true,
+      //     updatedAt: true,
+      //   },
+      // });
+
+      // appGroup.members = memberDetails.map((user) => ({
+      //   ...user,
+      //   createdAt: user.createdAt.toISOString(),
+      //   updatedAt: user.updatedAt.toISOString(),
+      // }));
 
       return appGroup;
     }),

@@ -1,6 +1,7 @@
 // page.tsx
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { useLocalStorage } from "usehooks-ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import {
 import { SignOutButton } from "@clerk/nextjs";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const { data, isLoading } = api.user.getUserInfo.useQuery();
   const {
     data: userStats,
@@ -246,12 +248,21 @@ export default function AdminDashboard() {
         title="All User Groups"
         icon={<Users2 className="h-6 w-6 text-orange-500" />}
       >
+        <div className="mb-4 flex justify-start">
+          <Button
+            onClick={() => router.push("/admin/create-group")}
+            className="bg-orange-500 text-white hover:bg-orange-600"
+          >
+            Create New Group
+          </Button>
+        </div>
         {userGroups?.map((group) => (
           <motion.div
             key={group.id}
             className="mb-4 rounded-lg border bg-white p-4 shadow-sm hover:shadow-md"
             variants={cardVariants}
             whileHover="hover"
+            onClick={() => router.push(`/admin/${group.id}`)}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -261,7 +272,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-                {Array.isArray(group.members) ? group.members.length : 0} Members
+                {Array.isArray(group.members) ? group.members.length : 0}{" "}
+                Members
               </span>
             </div>
           </motion.div>
