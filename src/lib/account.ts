@@ -335,7 +335,7 @@ class Account {
   async performInitialSync() {
     try {
       // Start the sync process
-      const daysWithin = 14;
+      const daysWithin = 7;
       let syncResponse = await this.startSync(daysWithin);
 
       // Wait until the sync is ready
