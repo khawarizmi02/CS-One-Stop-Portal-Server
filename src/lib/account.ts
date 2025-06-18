@@ -18,7 +18,7 @@ const API_BASE_URL = env.AURINKO_API_URL;
 
 const TIMEMIN = new Date(
   new Date().getFullYear(),
-  new Date().getMonth() - 2,
+  new Date().getMonth() - 0,
   1,
 ).toISOString();
 const TIMEMAX = new Date(
@@ -335,7 +335,7 @@ class Account {
   async performInitialSync() {
     try {
       // Start the sync process
-      const daysWithin = 7;
+      const daysWithin = 4;
       let syncResponse = await this.startSync(daysWithin);
 
       // Wait until the sync is ready
