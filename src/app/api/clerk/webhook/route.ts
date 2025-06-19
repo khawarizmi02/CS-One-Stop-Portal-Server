@@ -40,11 +40,13 @@ const CreateUser = async (data: any) => {
     role,
   };
 
+  let userRole = user.role ?? "new";
+
   // Check the email if has student domain
   if (email.endsWith("@student.usm.my")) {
-    user.role = "student";
+    userRole = "student";
   } else if (email.endsWith("@usm.my")) {
-    user.role = "lecturer";
+    userRole = "lecturer";
   }
 
   try {
@@ -57,7 +59,7 @@ const CreateUser = async (data: any) => {
     });
 
     // Update user role metadata in Clerk
-    await updateUserRoleMetadata({ userId, role });
+    await updateUserRoleMetadata({ userId, role: userRole });
 
     return new Response("New webhook event received", { status: 200 });
   } catch (error) {
